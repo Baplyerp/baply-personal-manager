@@ -12,11 +12,7 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    // Simulando o tempo de busca dos dados no Supabase para ver a animação
-    const timer = setTimeout(() => {
-      setCarregando(false);
-    }, 1500);
-
+    const timer = setTimeout(() => setCarregando(false), 1500);
     return () => clearTimeout(timer);
   }, []);
 
