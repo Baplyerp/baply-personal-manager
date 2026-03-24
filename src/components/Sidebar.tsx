@@ -20,9 +20,30 @@ export default function Sidebar({ aberto, fecharMenu }: SidebarProps) {
           <Link href="/dashboard" className="flex items-center gap-4 p-3 rounded-xl bg-stone-100 dark:bg-stone-800 text-[#A67B5B] transition-colors"><LayoutDashboard size={24} className="shrink-0" /><span className="md:hidden font-medium">Dashboard</span></Link>
           <Link href="#" className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"><FileSignature size={24} className="shrink-0" /><span className="md:hidden font-medium">Contratos</span></Link>
           <Link href="#" className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"><Wallet size={24} className="shrink-0" /><span className="md:hidden font-medium">Financeiro</span></Link>
+        <nav className="flex flex-col gap-2 md:gap-6 w-full px-4 md:px-0 md:items-center">
+          <Link href="/dashboard" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500 hover:text-[#A67B5B] transition-colors" title="Visão Geral">
+            <LayoutDashboard size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Dashboard</span>
+          </Link>
+          
+          <Link href="/dashboard/contratos" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Contratos & Acordos">
+            <FileSignature size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Contratos</span>
+          </Link>
+          
+          {/* Adicionamos a rota de parceiros aqui! */}
+          <Link href="/dashboard/parceiros" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Ecossistema de Parceiros">
+            <Users size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Parceiros</span>
+          </Link>
         </nav>
+
         <div className="mt-auto px-4 md:px-0 w-full md:flex md:justify-center">
-          <button className="flex items-center gap-4 p-3 w-full md:w-auto rounded-xl text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors"><Settings size={24} className="shrink-0" /><span className="md:hidden font-medium">Configurações</span></button>
+          {/* Link para Configurações no rodapé da Sidebar */}
+          <Link href="/dashboard/configuracoes" onClick={fecharMenu} className="flex items-center gap-4 p-3 w-full md:w-auto rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Configurações do Perfil">
+            <Settings size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Configurações</span>
+          </Link>
         </div>
       </aside>
     </>

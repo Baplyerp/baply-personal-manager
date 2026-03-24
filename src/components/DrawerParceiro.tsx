@@ -141,7 +141,7 @@ export default function DrawerParceiro({ aberto, fechar, parceiroEditando, aoSal
                 <option value="familiar">Familiar (Flexível/Apoio)</option>
                 <option value="servico">Serviço (Variável)</option>
                 <option disabled>──────────</option>
-                <option value="novo" className="font-bold text-[#A67B5B]">✨ Criar nova categoria...</option>
+                <option value="novo" className="font-bold text-[#A67B5B]">+ Adicionar categoria personalizada</option>
               </select>
             )}
           </div>
