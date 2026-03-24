@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileSignature, Plus, Loader2, CalendarDays, Wallet, ArrowRight } from "lucide-react";
+// 👇 Adicionado o 'User' aqui no import
+import { FileSignature, Plus, Loader2, CalendarDays, Wallet, ArrowRight, User } from "lucide-react";
 import DrawerContrato from "@/components/DrawerContrato";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -13,7 +14,6 @@ export default function ContratosPage() {
 
   const buscarContratos = async () => {
     setCarregando(true);
-    // Faz um join mágico no Supabase: Traz o contrato e o nome do parceiro atrelado a ele!
     const { data, error } = await supabase
       .from("contratos")
       .select(`
@@ -45,14 +45,19 @@ export default function ContratosPage() {
             Gestão de valores, aluguéis e prazos de quitação.
           </p>
         </div>
-        <button onClick={() => setDrawerAberto(true)} className="flex items-center gap-2 px-5 py-3 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-stone-50 dark:text-stone-900 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+        <button 
+          onClick={() => setDrawerAberto(true)} 
+          className="flex items-center gap-2 px-5 py-3 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-stone-50 dark:text-stone-900 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
+        >
           <Plus size={20} />
           <span>Novo Acordo</span>
         </button>
       </div>
 
       {carregando ? (
-        <div className="flex justify-center p-12"><Loader2 className="animate-spin text-[#A67B5B]" size={40} /></div>
+        <div className="flex justify-center p-12">
+          <Loader2 className="animate-spin text-[#A67B5B]" size={40} />
+        </div>
       ) : contratos.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-3xl bg-white/50 dark:bg-stone-900/50">
           <FileSignature size={48} className="text-stone-300 dark:text-stone-700 mb-4" />
@@ -85,7 +90,9 @@ export default function ContratosPage() {
               <div className="space-y-3 pt-2 text-sm text-stone-600 dark:text-stone-400">
                 <div className="flex justify-between items-center bg-stone-50 dark:bg-stone-950 p-2.5 rounded-lg">
                   <span className="flex items-center gap-2"><Wallet size={16}/> Parcelamento</span>
-                  <span className="font-bold text-stone-900 dark:text-stone-100">{contrato.quantidade_parcelas}x (R$ {(contrato.valor_total / contrato.quantidade_parcelas).toFixed(2)})</span>
+                  <span className="font-bold text-stone-900 dark:text-stone-100">
+                    {contrato.quantidade_parcelas}x (R$ {(contrato.valor_total / contrato.quantidade_parcelas).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                  </span>
                 </div>
                 <div className="flex justify-between items-center bg-stone-50 dark:bg-stone-950 p-2.5 rounded-lg">
                   <span className="flex items-center gap-2"><CalendarDays size={16}/> Vencimento</span>
