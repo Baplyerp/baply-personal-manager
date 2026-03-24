@@ -6,11 +6,14 @@ import { FileSignature, Plus, Loader2, CalendarDays, Wallet, ArrowRight, User } 
 import DrawerContrato from "@/components/DrawerContrato";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import DrawerTransacoes from "@/components/DrawerTransacoes";
 
 export default function ContratosPage() {
   const [drawerAberto, setDrawerAberto] = useState(false);
   const [contratos, setContratos] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [drawerTransacaoAberto, setDrawerTransacaoAberto] = useState(false);
+  const [contratoSelecionado, setContratoSelecionado] = useState<any>(null);
 
   const buscarContratos = async () => {
     setCarregando(true);
@@ -100,11 +103,16 @@ export default function ContratosPage() {
                 </div>
               </div>
 
-              <button className="mt-6 w-full flex items-center justify-between px-4 py-3 bg-stone-100 dark:bg-stone-800 hover:bg-[#A67B5B] hover:text-white text-stone-700 dark:text-stone-200 rounded-xl text-sm font-bold transition-all group-hover:shadow-md">
+              <button 
+                onClick={() => {
+                  setContratoSelecionado(contrato);
+                  setDrawerTransacaoAberto(true);
+                }} 
+                className="mt-6 w-full flex items-center justify-between px-4 py-3 bg-stone-100 dark:bg-stone-800 hover:bg-[#A67B5B] hover:text-white text-stone-700 dark:text-stone-200 rounded-xl text-sm font-bold transition-all group-hover:shadow-md"
+              >
                 <span>Ver Transações</span>
                 <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
               </button>
-
             </div>
           ))}
         </div>
