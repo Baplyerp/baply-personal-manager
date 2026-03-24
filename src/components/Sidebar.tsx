@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, FileSignature, Wallet, Users, Settings, X } from "lucide-react";
+import { LayoutDashboard, FileSignature, Wallet, Users, Settings, X, CreditCard, ShoppingCart, Repeat, Target } from "lucide-react";
 import Link from "next/link";
 
 type SidebarProps = { 
@@ -32,22 +32,44 @@ export default function Sidebar({ aberto, fecharMenu }: SidebarProps) {
           </button>
         </div>
 
-        {/* Navegação Central */}
-        <nav className="flex flex-col gap-2 md:gap-6 w-full px-4 md:px-0 md:items-center">
+        {/* Navegação Central Expandida */}
+        <nav className="flex flex-col gap-1 md:gap-2 w-full px-4 md:px-0 md:items-center overflow-y-auto pb-4">
           
           <Link href="/dashboard" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500 hover:text-[#A67B5B] transition-colors" title="Visão Geral">
             <LayoutDashboard size={24} className="shrink-0" />
             <span className="md:hidden font-medium">Dashboard</span>
           </Link>
           
+          <div className="w-full h-px bg-stone-100 dark:bg-stone-800 my-2 md:hidden"></div>
+          
+          <Link href="/dashboard/parceiros" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Ecossistema de Parceiros">
+            <Users size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Parceiros</span>
+          </Link>
+
           <Link href="/dashboard/contratos" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Contratos & Acordos">
             <FileSignature size={24} className="shrink-0" />
             <span className="md:hidden font-medium">Contratos</span>
           </Link>
 
-          <Link href="/dashboard/parceiros" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Ecossistema de Parceiros">
-            <Users size={24} className="shrink-0" />
-            <span className="md:hidden font-medium">Parceiros</span>
+          <Link href="/dashboard/cartoes" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Cartões & Faturas">
+            <CreditCard size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Cartões</span>
+          </Link>
+
+          <Link href="/dashboard/despesas" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Despesas Diárias">
+            <ShoppingCart size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Despesas Diárias</span>
+          </Link>
+
+          <Link href="/dashboard/assinaturas" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Assinaturas & Recorrentes">
+            <Repeat size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Assinaturas</span>
+          </Link>
+
+          <Link href="/dashboard/metas" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Patrimônio & Metas">
+            <Target size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Metas</span>
           </Link>
           
         </nav>
