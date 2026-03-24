@@ -104,14 +104,46 @@ export default function DrawerParceiro({ aberto, fechar, parceiroEditando, aoSal
             <input value={chavePix} onChange={(e) => setChavePix(e.target.value)} type="text" className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 focus:border-[#A67B5B] transition-all group-hover:shadow-md" />
           </div>
 
+          {/* Campo: Natureza da Relação (Dinâmico) */}
           <div className="space-y-2 group">
-            <label className="text-sm font-semibold text-stone-700 dark:text-stone-300 flex items-center gap-2"><Tag size={16} className="text-[#A67B5B]" /> Natureza da Relação</label>
-            <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 focus:border-[#A67B5B] transition-all group-hover:shadow-md">
-              <option value="credor">Credor (Risco/Dívida)</option>
-              <option value="locador">Locador (Contrato Fixo)</option>
-              <option value="familiar">Familiar (Flexível/Apoio)</option>
-              <option value="servico">Serviço (Variável)</option>
-            </select>
+            <label className="text-sm font-semibold text-stone-700 dark:text-stone-300 flex items-center gap-2">
+              <Tag size={16} className="text-[#A67B5B]" /> Natureza da Relação
+            </label>
+            
+            {/* Lógica: Se for 'novo', mostra input de texto. Se não, mostra o Select */}
+            {tipo === "novo" ? (
+              <div className="flex gap-2 animate-in fade-in slide-in-from-right-4 duration-300">
+                <input 
+                  autoFocus
+                  type="text" 
+                  placeholder="Ex: Sócio, Investidor..."
+                  className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 focus:border-[#A67B5B] transition-all shadow-inner"
+                  onChange={(e) => setTipo(e.target.value.toLowerCase())} // Salva em minúsculo para padronizar
+                  onBlur={(e) => { if (!e.target.value) setTipo("credor") }} // Se sair sem digitar, volta ao padrão
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setTipo("credor")}
+                  className="px-4 bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-xl hover:bg-stone-300 dark:hover:bg-stone-700 transition-colors"
+                  title="Cancelar"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            ) : (
+              <select 
+                value={tipo} 
+                onChange={(e) => setTipo(e.target.value)} 
+                className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 focus:border-[#A67B5B] transition-all group-hover:shadow-md cursor-pointer"
+              >
+                <option value="credor">Credor (Risco/Dívida)</option>
+                <option value="locador">Locador (Contrato Fixo)</option>
+                <option value="familiar">Familiar (Flexível/Apoio)</option>
+                <option value="servico">Serviço (Variável)</option>
+                <option disabled>──────────</option>
+                <option value="novo" className="font-bold text-[#A67B5B]">✨ Criar nova categoria...</option>
+              </select>
+            )}
           </div>
         </form>
 

@@ -90,7 +90,7 @@ export default function ParceirosPage() {
         /* O Grid de Cards Inteligentes */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {parceiros.map((parceiro) => {
-            const config = relacaoConfig[parceiro.tipo] || relacaoConfig.servico;
+            const config = relacaoConfig[parceiro.tipo] || { cor: "text-stone-500 bg-stone-100 dark:bg-stone-800", icone: Users, label: parceiro.tipo.toUpperCase() };
             const Icone = config.icone;
 
             return (
