@@ -118,7 +118,22 @@ export default function ContratosPage() {
         </div>
       )}
 
-      <DrawerContrato aberto={drawerAberto} fechar={() => setDrawerAberto(false)} aoSalvar={buscarContratos} />
+      {/* Aqui moram os painéis ocultos que deslizam na tela */}
+      <DrawerContrato 
+        aberto={drawerAberto} 
+        fechar={() => setDrawerAberto(false)} 
+        aoSalvar={buscarContratos} 
+      />
+      
+      <DrawerTransacoes 
+        aberto={drawerTransacaoAberto} 
+        fechar={() => setDrawerTransacaoAberto(false)} 
+        contrato={contratoSelecionado} 
+      />
+
+    </div>
+  );
+}
     </div>
   );
 }
