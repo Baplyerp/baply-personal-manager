@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Settings, User, Briefcase, Wallet, Target, Save, Loader2, ShieldCheck, Building, MapPin, Link as LinkIcon, Image as ImageIcon } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Settings, User, Briefcase, Wallet, Target, Save, Loader2, ShieldCheck, Building, MapPin, Link as LinkIcon, Image as ImageIcon, Camera } from "lucide-react";
 import { usePerfil } from "@/contexts/PerfilContext";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -9,6 +9,10 @@ import { supabase } from "@/lib/supabase";
 export default function ConfiguracoesPage() {
   const { perfil, atualizarPerfil } = usePerfil();
   const [salvando, setSalvando] = useState(false);
+
+  // Referências para os inputs de arquivo ocultos
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Estados Locais (Identidade)
   const [nome, setNome] = useState("");
@@ -36,6 +40,25 @@ export default function ConfiguracoesPage() {
       setRenda(perfil.renda_mensal ? perfil.renda_mensal.toString() : "");
     }
   }, [perfil]);
+
+  // Função mágica que converte a imagem em texto (Base64) para salvar direto no banco
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setUrl: (url: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Limita o tamanho do arquivo a ~2MB para não pesar o banco
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem é muito pesada. Escolha uma foto com menos de 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // O resultado é uma string gigante que o navegador entende como imagem
+      setUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +94,10 @@ export default function ConfiguracoesPage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-6xl mx-auto">
       
+      {/* Inputs de Arquivo Ocultos */}
+      <input type="file" accept="image/*" ref={logoInputRef} onChange={(e) => handleFileUpload(e, setEmpresaLogoUrl)} className="hidden" />
+      <input type="file" accept="image/*" ref={avatarInputRef} onChange={(e) => handleFileUpload(e, setAvatarUrl)} className="hidden" />
+
       {/* Cabeçalho */}
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 flex items-center gap-3">
@@ -84,20 +111,30 @@ export default function ConfiguracoesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
-        {/* Coluna Esquerda: O Crachá Premium (Efeito GestoBap) */}
+        {/* Coluna Esquerda: O Crachá Premium Interativo */}
         <div className="lg:col-span-1 sticky top-8">
           <div className="relative group w-full aspect-[3/4] rounded-3xl bg-gradient-to-b from-stone-900 via-stone-800 to-stone-950 shadow-2xl overflow-hidden border border-stone-700/50 flex flex-col transition-transform duration-500 hover:scale-[1.02]">
             
-            {/* Efeito Holográfico/Reflexo passando na diagonal */}
+            {/* Efeito Holográfico */}
             <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 transform -translate-x-full group-hover:translate-x-full skew-x-12 z-20 pointer-events-none" />
             
             {/* Furo do Crachá no topo */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-2 bg-stone-950 rounded-full border border-stone-800/50 shadow-inner z-10" />
 
             <div className="p-8 pt-12 flex-1 flex flex-col relative z-10">
-              {/* Header do Crachá (Logo e Empresa) */}
+              
+              {/* Header do Crachá (Logo Clicável) */}
               <div className="flex items-center gap-3 mb-8">
-                <div className="h-10 w-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center overflow-hidden border border-white/10">
+                <div 
+                  onClick={() => logoInputRef.current?.click()}
+                  className="group/logo cursor-pointer relative h-10 w-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center overflow-hidden border border-white/10 hover:border-white/30 transition-all"
+                  title="Clique para alterar a logo da empresa"
+                >
+                  {/* Overlay escuro que aparece no hover para convidar ao clique */}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/logo:opacity-100 transition-opacity z-10">
+                    <Camera size={16} className="text-white" />
+                  </div>
+                  
                   {empresaLogoUrl ? (
                     <img src={empresaLogoUrl} alt="Logo" className="w-full h-full object-cover" />
                   ) : (
@@ -110,11 +147,20 @@ export default function ConfiguracoesPage() {
                 </div>
               </div>
 
-              {/* Foto de Perfil */}
+              {/* Foto de Perfil Clicável */}
               <div className="flex justify-center mb-6">
                 <div className="relative w-32 h-32">
                   <div className="absolute inset-0 bg-gradient-to-tr from-[#A67B5B] to-[#e6ccb8] rounded-full blur-md opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
-                  <div className="relative h-full w-full bg-stone-800 rounded-full border-2 border-white/20 overflow-hidden flex items-center justify-center">
+                  <div 
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="group/avatar cursor-pointer relative h-full w-full bg-stone-800 rounded-full border-2 border-white/20 overflow-hidden flex items-center justify-center hover:border-[#A67B5B] transition-all"
+                    title="Clique para alterar sua foto de perfil"
+                  >
+                    {/* Overlay escuro no hover */}
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity z-10">
+                      <Camera size={24} className="text-white" />
+                    </div>
+
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" />
                     ) : (
@@ -157,8 +203,8 @@ export default function ConfiguracoesPage() {
                   <input required value={nome} onChange={(e) => setNome(e.target.value)} type="text" className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 transition-all" />
                 </div>
                 <div className="space-y-2 group">
-                  <label className="text-sm font-semibold text-stone-500 flex items-center gap-1"><ImageIcon size={14}/> URL da Foto (Avatar)</label>
-                  <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} type="url" placeholder="https://..." className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 transition-all" />
+                  <label className="text-sm font-semibold text-stone-500 flex items-center gap-1"><LinkIcon size={14}/> Link da Foto (Opcional)</label>
+                  <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} type="text" placeholder="Cole uma URL ou clique no crachá..." className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 transition-all text-stone-400 truncate" />
                 </div>
               </div>
             </div>
@@ -182,8 +228,8 @@ export default function ConfiguracoesPage() {
                   <input value={localTrabalho} onChange={(e) => setLocalTrabalho(e.target.value)} type="text" placeholder="Ex: São Luís - MA" className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 transition-all" />
                 </div>
                 <div className="space-y-2 group">
-                  <label className="text-sm font-semibold text-stone-500 flex items-center gap-1"><LinkIcon size={14}/> URL Logo da Instituição</label>
-                  <input value={empresaLogoUrl} onChange={(e) => setEmpresaLogoUrl(e.target.value)} type="url" placeholder="https://..." className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 transition-all" />
+                  <label className="text-sm font-semibold text-stone-500 flex items-center gap-1"><LinkIcon size={14}/> Link da Logo (Opcional)</label>
+                  <input value={empresaLogoUrl} onChange={(e) => setEmpresaLogoUrl(e.target.value)} type="text" placeholder="Cole uma URL ou clique na logo..." className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A67B5B]/50 transition-all text-stone-400 truncate" />
                 </div>
                 <div className="space-y-2 group md:col-span-2">
                   <label className="text-sm font-semibold text-stone-500">Gestão Imediata (Opcional)</label>
