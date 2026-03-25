@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, FileSignature, Wallet, Users, Settings, X, CreditCard, ShoppingCart, Repeat, Target } from "lucide-react";
+import { LayoutDashboard, FileSignature, Wallet, Users, Settings, X, CreditCard, ShoppingCart, Repeat, Target, Plane } from "lucide-react";
 import Link from "next/link";
 
 type SidebarProps = { 
