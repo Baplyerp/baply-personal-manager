@@ -7,11 +7,12 @@ export type DadosPerfil = {
   nome: string;
   cargo: string;
   renda_mensal: number;
-  avatar_url?: string;        // 👈 Adicionado
-  empresa_nome?: string;      // 👈 Adicionado
-  empresa_logo_url?: string;  // 👈 Adicionado
-  local_trabalho?: string;    // 👈 Adicionado
-  gestor_imediato?: string;   // 👈 Adicionado
+  avatar_url?: string;
+  empresa_nome?: string;
+  setor?: string;             // 👈 O novo campo adicionado aqui!
+  empresa_logo_url?: string;
+  local_trabalho?: string;
+  gestor_imediato?: string;
 };
 
 type PerfilContextType = {
