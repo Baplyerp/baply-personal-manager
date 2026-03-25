@@ -33,24 +33,22 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
 
   const buscarPerfil = async () => {
     try {
+      // Usamos limit(1) em vez de .single() para evitar erro de "linha não encontrada" caso o banco esteja vazio
       const { data, error } = await supabase
         .from("perfil_global")
         .select("*")
-        .limit(1)
-        .single();
+        .limit(1);
 
-      if (data) {
-        setPerfil({
-          nome: data.nome,
-          cargo: data.cargo,
-          renda_mensal: parseFloat(data.renda_mensal),
-        });
+      if (error) throw error;
+      
+      // Se encontrou dados, salva no contexto. Se não, deixa null.
+      if (data && data.length > 0) {
+        setPerfil(data[0]);
+      } else {
+        setPerfil(null);
       }
     } catch (error) {
-      console.error("Erro ao buscar perfil global:", error);
-    } finally {
-      // Pequeno delay para a animação Baply brilhar
-      setTimeout(() => setCarregando(false), 800);
+      console.error("Erro ao carregar perfil global:", error);
     }
   };
 

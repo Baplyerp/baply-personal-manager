@@ -2,6 +2,7 @@
 
 import { LayoutDashboard, FileSignature, Wallet, Users, Settings, X, CreditCard, ShoppingCart, Repeat, Target, Plane } from "lucide-react";
 import Link from "next/link";
+import { usePerfil } from "@/contexts/PerfilContext";
 
 type SidebarProps = { 
   aberto: boolean; 
@@ -9,6 +10,7 @@ type SidebarProps = {
 };
 
 export default function Sidebar({ aberto, fecharMenu }: SidebarProps) {
+  const { perfil } = usePerfil();
   return (
     <>
       {/* Overlay escuro no mobile */}
@@ -22,15 +24,23 @@ export default function Sidebar({ aberto, fecharMenu }: SidebarProps) {
       {/* Sidebar Principal */}
       <aside className={`fixed top-0 left-0 h-screen w-[260px] md:w-[104px] bg-white dark:bg-stone-900 border-r border-stone-200 dark:border-stone-800 z-50 flex flex-col md:items-center py-8 transition-transform duration-300 ease-in-out ${aberto ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
         
-        {/* Logo e Fechar (Mobile) */}
-        <div className="flex items-center justify-between px-6 md:px-0 mb-12 w-full md:justify-center">
-          <div className="h-12 w-12 bg-stone-900 dark:bg-white rounded-xl flex items-center justify-center shadow-sm">
-            <span className="text-white dark:text-stone-900 font-black text-xl">B.</span>
+        {/* Logo, Foto e Fechar */}
+          <div className="flex items-center justify-between px-6 md:px-0 mb-12 w-full md:justify-center">
+            {perfil?.avatar_url ? (
+              <div className="h-12 w-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden border-2 border-stone-200 dark:border-stone-800">
+                <img src={perfil.avatar_url} alt="Perfil" className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="h-12 w-12 bg-stone-900 dark:bg-white rounded-xl flex items-center justify-center shadow-sm">
+                <span className="text-white dark:text-stone-900 font-black text-xl">
+                  {perfil?.nome ? perfil.nome.charAt(0).toUpperCase() : "B."}
+                </span>
+              </div>
+            )}
+            <button onClick={fecharMenu} className="md:hidden p-2 text-stone-500 hover:bg-stone-100 rounded-lg">
+              <X size={24} />
+            </button>
           </div>
-          <button onClick={fecharMenu} className="md:hidden p-2 text-stone-500 hover:bg-stone-100 rounded-lg">
-            <X size={24} />
-          </button>
-        </div>
 
         {/* Navegação Central Expandida */}
         <nav className="flex flex-col gap-1 md:gap-2 w-full px-4 md:px-0 md:items-center overflow-y-auto pb-4">

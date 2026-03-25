@@ -61,12 +61,9 @@ export default function ConfiguracoesPage() {
     const toastId = toast.loading("Sincronizando identidade em todo o sistema...");
 
     try {
-      // 1. O Pulo do Gato: Busca o ID real do seu perfil no banco primeiro
-      const { data: perfilExistente } = await supabase
-        .from("perfil_global")
-        .select("id")
-        .limit(1)
-        .single();
+      // Busca o ID de forma segura (sem quebrar se não existir)
+      const { data: perfis } = await supabase.from("perfil_global").select("id").limit(1);
+      const perfilExistente = perfis && perfis.length > 0 ? perfis[0] : null;
 
       const dadosParaSalvar = {
         nome,
@@ -80,28 +77,18 @@ export default function ConfiguracoesPage() {
         renda_mensal: parseFloat(renda.replace(",", ".") || "0"),
       };
 
-      let erroSalvamento;
-
-      if (perfilExistente?.id) {
-        // Se já tem o seu perfil criado, atualiza usando o ID (à prova de falhas)
-        const { error } = await supabase
-          .from("perfil_global")
-          .update(dadosParaSalvar)
-          .eq("id", perfilExistente.id);
-        erroSalvamento = error;
+      if (perfilExistente) {
+        // Atualiza o existente
+        const { error } = await supabase.from("perfil_global").update(dadosParaSalvar).eq("id", perfilExistente.id);
+        if (error) throw error;
       } else {
-        // Se for a primeira vez que você está salvando, ele insere o registro
-        const { error } = await supabase
-          .from("perfil_global")
-          .insert([dadosParaSalvar]);
-        erroSalvamento = error;
+        // Cria pela primeira vez
+        const { error } = await supabase.from("perfil_global").insert([dadosParaSalvar]);
+        if (error) throw error;
       }
 
-      if (erroSalvamento) throw erroSalvamento;
-
-      // Força a atualização do contexto global para espalhar a foto pelas outras telas
       await atualizarPerfil();
-      toast.success("Crachá e credenciais sincronizados com sucesso! ✨", { id: toastId });
+      toast.success("Identidade sincronizada com sucesso! ✨", { id: toastId });
     } catch (error: any) {
       toast.error(`Erro ao salvar: ${error.message}`, { id: toastId });
     } finally {
