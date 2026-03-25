@@ -71,6 +71,11 @@ export default function Sidebar({ aberto, fecharMenu }: SidebarProps) {
             <Target size={24} className="shrink-0" />
             <span className="md:hidden font-medium">Metas</span>
           </Link>
+
+          <Link href="/dashboard/viagens" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Hub de Transição & Viagens">
+            <Plane size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Transição & Viagens</span>
+          </Link>
           
         </nav>
 
