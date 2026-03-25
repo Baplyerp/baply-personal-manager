@@ -9,7 +9,7 @@ export type DadosPerfil = {
   renda_mensal: number;
   avatar_url?: string;
   empresa_nome?: string;
-  setor?: string;             // 👈 O novo campo adicionado aqui!
+  setor?: string;
   empresa_logo_url?: string;
   local_trabalho?: string;
   gestor_imediato?: string;
@@ -33,7 +33,6 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
 
   const buscarPerfil = async () => {
     try {
-      // Usamos limit(1) em vez de .single() para evitar erro de "linha não encontrada" caso o banco esteja vazio
       const { data, error } = await supabase
         .from("perfil_global")
         .select("*")
@@ -41,7 +40,6 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      // Se encontrou dados, salva no contexto. Se não, deixa null.
       if (data && data.length > 0) {
         setPerfil(data[0]);
       } else {
@@ -49,6 +47,8 @@ export function PerfilProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error("Erro ao carregar perfil global:", error);
+    } finally {
+      setCarregando(false); // ✅ Fix aplicado aqui!
     }
   };
 
