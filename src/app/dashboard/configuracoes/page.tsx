@@ -55,7 +55,7 @@ export default function ConfiguracoesPage() {
           gestor_imediato: gestor,
           renda_mensal: parseFloat(renda.replace(",", ".") || "0"),
         })
-        .eq("nome", perfil?.nome); // Em um app multi-usuário, seria pelo ID logado
+        .eq("nome", perfil?.nome);
 
       if (error) throw error;
 
