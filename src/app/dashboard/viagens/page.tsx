@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plane, Plus, Loader2, MapPin, Briefcase, TrendingUp, ShieldCheck, Ticket, Bus, ArrowRight, DownloadCloud } from "lucide-react";
+// 👇 Aqui está a mágica: importando apenas os ícones que esta tela precisa!
+import { Plane, Plus, Loader2, MapPin, Briefcase, TrendingUp, ShieldCheck, Ticket } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { usePerfil } from "@/contexts/PerfilContext";
