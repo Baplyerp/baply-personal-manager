@@ -3,10 +3,15 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
-type DadosPerfil = {
+export type DadosPerfil = {
   nome: string;
   cargo: string;
   renda_mensal: number;
+  avatar_url?: string;        // 👈 Adicionado
+  empresa_nome?: string;      // 👈 Adicionado
+  empresa_logo_url?: string;  // 👈 Adicionado
+  local_trabalho?: string;    // 👈 Adicionado
+  gestor_imediato?: string;   // 👈 Adicionado
 };
 
 type PerfilContextType = {
