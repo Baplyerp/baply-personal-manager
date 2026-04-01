@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { usePerfil } from "@/contexts/PerfilContext";
 import DrawerViagem from "@/components/DrawerViagem";
-import DrawerLogistica from "@/components/DrawerLogistica"; // 👈 Importamos o novo Drawer!
+import DrawerLogistica from "@/components/DrawerLogistica";
 
 export default function ViagensPage() {
   const { perfil } = usePerfil();
@@ -168,9 +168,17 @@ export default function ViagensPage() {
                             <div className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-stone-50/50 dark:bg-stone-950/50 border-b border-l border-stone-200 dark:border-stone-800"></div>
                             <div className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full bg-stone-50/50 dark:bg-stone-950/50 border-t border-l border-stone-200 dark:border-stone-800"></div>
                             
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white mb-2 shadow-sm ${trecho.tipo_transporte === 'voo' ? 'bg-indigo-500' : 'bg-amber-500'}`}>
-                              {trecho.tipo_transporte === 'voo' ? <Plane size={18} /> : <Bus size={18} />}
-                            </div>
+                            {/* Renderização Inteligente da Logo */}
+                            {trecho.cia_logo_url ? (
+                              <div className="w-10 h-10 rounded-full mb-2 shadow-sm border border-stone-200 dark:border-stone-700 overflow-hidden flex items-center justify-center bg-white">
+                                <img src={trecho.cia_logo_url} alt={trecho.cia_operadora} className="w-full h-full object-contain p-1" />
+                              </div>
+                            ) : (
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white mb-2 shadow-sm ${trecho.tipo_transporte === 'voo' ? 'bg-indigo-500' : 'bg-amber-500'}`}>
+                                {trecho.tipo_transporte === 'voo' ? <Plane size={18} /> : <Bus size={18} />}
+                              </div>
+                            )}
+
                             <span className="text-[10px] font-black uppercase text-stone-500 text-center truncate w-full" title={trecho.cia_operadora}>{trecho.cia_operadora || "CIA"}</span>
                           </div>
 
@@ -233,7 +241,6 @@ export default function ViagensPage() {
         aoSalvar={buscarViagens} 
       />
       
-      {/* O Novo Drawer Injetado Aqui */}
       <DrawerLogistica
         aberto={drawerLogisticaAberto}
         fechar={() => setDrawerLogisticaAberto(false)}
