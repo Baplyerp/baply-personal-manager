@@ -10,19 +10,20 @@ type DrawerLogisticaProps = {
   fechar: () => void;
   aoSalvar: () => void;
   viagemId: string | null;
-  trechoEditando?: any; // 👈 A mágica da Edição começa aqui
+  trechoEditando?: any;
 };
 
-// A "Logoteca" Automática
+// 🧠 A Logoteca Inteligente (Agora usando Clearbit API para logos oficiais de alta qualidade)
 const DIRETORIO_LOGOS: Record<string, string> = {
-  "azul": "https://logodownload.org/wp-content/uploads/2014/05/azul-logo-3.png",
-  "gol": "https://logodownload.org/wp-content/uploads/2014/04/gol-logo-4.png",
-  "latam": "https://logodownload.org/wp-content/uploads/2015/08/latam-logo-2.png",
-  "guanabara": "https://logodownload.org/wp-content/uploads/2019/08/expresso-guanabara-logo.png",
-  "cometa": "https://logodownload.org/wp-content/uploads/2019/08/viacao-cometa-logo.png",
-  "1001": "https://logodownload.org/wp-content/uploads/2019/08/viacao-1001-logo.png",
-  "itapemirim": "https://logodownload.org/wp-content/uploads/2019/08/viacao-itapemirim-logo.png",
-  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png" // Bônus!
+  "azul": "https://logo.clearbit.com/voeazul.com.br",
+  "gol": "https://logo.clearbit.com/voegol.com.br",
+  "latam": "https://logo.clearbit.com/latamairlines.com",
+  "guanabara": "https://logo.clearbit.com/viajeguanabara.com.br",
+  "cometa": "https://logo.clearbit.com/viacaocometa.com.br",
+  "1001": "https://logo.clearbit.com/autoviaca1001.com.br",
+  "progresso": "https://logo.clearbit.com/viacaoprogresso.com.br",
+  "aguia branca": "https://logo.clearbit.com/aguiabranca.com.br",
+  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png", // Seu ecossistema
 };
 
 export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, trechoEditando }: DrawerLogisticaProps) {
@@ -41,7 +42,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
   const [valorPago, setValorPago] = useState("");
   const [pagoPelaInstituicao, setPagoPelaInstituicao] = useState(false);
 
-  // 🧠 Inteligência 1: Se for edição, preenche tudo ao abrir
+  // Modo Edição: Carrega os dados quando aberto
   useEffect(() => {
     if (aberto && trechoEditando) {
       setTipoTransporte(trechoEditando.tipo_transporte || "voo");
@@ -55,17 +56,16 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
       setValorPago(trechoEditando.valor_pago ? trechoEditando.valor_pago.toString() : "");
       setPagoPelaInstituicao(trechoEditando.pago_pela_instituicao || false);
     } else if (aberto && !trechoEditando) {
-      // Se for novo, limpa tudo
       setTipoTransporte("voo"); setOrigem(""); setDestino(""); setDataPartida(""); setDataChegada("");
       setCiaOperadora(""); setCiaLogoUrl(""); setLocalizador(""); setValorPago(""); setPagoPelaInstituicao(false);
       setMostrarLinkManual(false);
     }
   }, [aberto, trechoEditando]);
 
-  // 🧠 Inteligência 2: Auto-Logo Espiã
+  // Motor Inteligente de Busca de Logo
   useEffect(() => {
-    // Só aplica a auto-logo se não estivermos editando um registro antigo (para não apagar o que o usuário já fez)
-    if (!trechoEditando && ciaOperadora) {
+    // Só pesquisa automaticamente se não for edição ou se o link manual não estiver aberto
+    if (!trechoEditando && ciaOperadora && !mostrarLinkManual) {
       const termo = ciaOperadora.toLowerCase().trim();
       let encontrou = false;
       
@@ -76,8 +76,8 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
           break;
         }
       }
-      // Limpa a URL se o usuário apagar o nome da empresa ou digitar algo que não está na lista
-      if (!encontrou && !mostrarLinkManual) {
+      
+      if (!encontrou) {
         setCiaLogoUrl("");
       }
     }
@@ -88,7 +88,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
     if (!viagemId) return toast.error("Nenhuma viagem selecionada.");
 
     setSalvando(true);
-    const toastId = toast.loading(trechoEditando ? "Atualizando bilhete..." : "Emitindo cartão de embarque...");
+    const toastId = toast.loading(trechoEditando ? "A atualizar bilhete..." : "A emitir cartão de embarque...");
 
     const dadosLogistica = {
       viagem_id: viagemId,
@@ -106,12 +106,10 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
 
     try {
       if (trechoEditando) {
-        // MODO ATUALIZAÇÃO
         const { error } = await supabase.from("trechos_logistica").update(dadosLogistica).eq('id', trechoEditando.id);
         if (error) throw error;
         toast.success("Trecho atualizado com sucesso! 🔄", { id: toastId });
       } else {
-        // MODO INSERÇÃO
         const { error } = await supabase.from("trechos_logistica").insert([dadosLogistica]);
         if (error) throw error;
         toast.success("Trecho logístico adicionado com sucesso! 🎟️", { id: toastId });
@@ -144,7 +142,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
               <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100 leading-tight">
                 {trechoEditando ? "Editar Trecho" : "Novo Trecho"}
               </h3>
-              <p className="text-xs text-stone-500 font-medium mt-0.5">Voo, Ônibus ou Carro</p>
+              <p className="text-xs text-stone-500 font-medium mt-0.5">Voo, Autocarro ou Carro</p>
             </div>
           </div>
           <button onClick={fechar} className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors">
@@ -161,7 +159,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
                 <Plane size={16} /> Voo
               </button>
               <button type="button" onClick={() => setTipoTransporte("onibus")} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${tipoTransporte === "onibus" ? "bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"}`}>
-                <Bus size={16} /> Ônibus
+                <Bus size={16} /> Autocarro
               </button>
             </div>
 
@@ -205,10 +203,11 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
             </div>
 
             {/* Inteligência de Cia & Logo */}
-            <div className="space-y-4 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-950/10">
+            <div className="space-y-4 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-950/10 transition-all">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-                  <Sparkles size={12} /> Auto-Logo Ativado
+                  <Sparkles size={12} className={ciaLogoUrl && !mostrarLinkManual ? "animate-pulse text-amber-500" : ""} /> 
+                  {ciaLogoUrl && !mostrarLinkManual ? "Logo Capturada!" : "Auto-Logo Web"}
                 </h4>
                 <button type="button" onClick={() => setMostrarLinkManual(!mostrarLinkManual)} className="text-[10px] text-stone-400 hover:text-indigo-600 underline">
                   Inserir link manual
@@ -218,7 +217,21 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2 group">
                   <label className="text-xs font-semibold text-stone-500">Cia / Viação</label>
-                  <input value={ciaOperadora} onChange={(e) => setCiaOperadora(e.target.value)} type="text" placeholder="Ex: Azul ou Latam" className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm shadow-sm" />
+                  {/* ✨ O Campo com Preview Mágico ao Vivo ✨ */}
+                  <div className="relative">
+                    <input 
+                      value={ciaOperadora} 
+                      onChange={(e) => setCiaOperadora(e.target.value)} 
+                      type="text" 
+                      placeholder="Ex: Azul ou Latam" 
+                      className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl pl-3 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm shadow-sm" 
+                    />
+                    {ciaLogoUrl && (
+                      <div className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg overflow-hidden bg-white shadow-sm border border-stone-100 animate-in zoom-in duration-300">
+                        <img src={ciaLogoUrl} alt="Preview" className="w-full h-full object-contain p-1" />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2 group">
                   <label className="text-xs font-semibold text-stone-500">Localizador</label>
@@ -226,10 +239,10 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
                 </div>
               </div>
               
-              {(mostrarLinkManual || ciaLogoUrl) && (
+              {mostrarLinkManual && (
                 <div className="space-y-2 group animate-in fade-in slide-in-from-top-2">
                   <label className="text-xs font-semibold text-stone-500 flex items-center gap-1">
-                    <LinkIcon size={12} /> {ciaLogoUrl ? "Logo capturada:" : "Link da Logo:"}
+                    <LinkIcon size={12} /> Link Direto da Imagem
                   </label>
                   <input value={ciaLogoUrl} onChange={(e) => setCiaLogoUrl(e.target.value)} type="url" placeholder="https://..." className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-xs text-stone-500 truncate" />
                 </div>
