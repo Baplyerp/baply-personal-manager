@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { X, Plane, Bus, MapPin, Calendar, DollarSign, Save, Loader2, Ticket, Building } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Plane, Bus, MapPin, Calendar, DollarSign, Save, Loader2, Ticket, Building, Link as LinkIcon, RefreshCw, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -10,10 +10,24 @@ type DrawerLogisticaProps = {
   fechar: () => void;
   aoSalvar: () => void;
   viagemId: string | null;
+  trechoEditando?: any; // 👈 A mágica da Edição começa aqui
 };
 
-export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: DrawerLogisticaProps) {
+// A "Logoteca" Automática
+const DIRETORIO_LOGOS: Record<string, string> = {
+  "azul": "https://logodownload.org/wp-content/uploads/2014/05/azul-logo-3.png",
+  "gol": "https://logodownload.org/wp-content/uploads/2014/04/gol-logo-4.png",
+  "latam": "https://logodownload.org/wp-content/uploads/2015/08/latam-logo-2.png",
+  "guanabara": "https://logodownload.org/wp-content/uploads/2019/08/expresso-guanabara-logo.png",
+  "cometa": "https://logodownload.org/wp-content/uploads/2019/08/viacao-cometa-logo.png",
+  "1001": "https://logodownload.org/wp-content/uploads/2019/08/viacao-1001-logo.png",
+  "itapemirim": "https://logodownload.org/wp-content/uploads/2019/08/viacao-itapemirim-logo.png",
+  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png" // Bônus!
+};
+
+export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, trechoEditando }: DrawerLogisticaProps) {
   const [salvando, setSalvando] = useState(false);
+  const [mostrarLinkManual, setMostrarLinkManual] = useState(false);
 
   // Estados do Formulário
   const [tipoTransporte, setTipoTransporte] = useState("voo");
@@ -22,44 +36,86 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: 
   const [dataPartida, setDataPartida] = useState("");
   const [dataChegada, setDataChegada] = useState("");
   const [ciaOperadora, setCiaOperadora] = useState("");
+  const [ciaLogoUrl, setCiaLogoUrl] = useState(""); 
   const [localizador, setLocalizador] = useState("");
   const [valorPago, setValorPago] = useState("");
   const [pagoPelaInstituicao, setPagoPelaInstituicao] = useState(false);
+
+  // 🧠 Inteligência 1: Se for edição, preenche tudo ao abrir
+  useEffect(() => {
+    if (aberto && trechoEditando) {
+      setTipoTransporte(trechoEditando.tipo_transporte || "voo");
+      setOrigem(trechoEditando.origem || "");
+      setDestino(trechoEditando.destino || "");
+      setDataPartida(trechoEditando.data_partida ? trechoEditando.data_partida.substring(0, 16) : "");
+      setDataChegada(trechoEditando.data_chegada ? trechoEditando.data_chegada.substring(0, 16) : "");
+      setCiaOperadora(trechoEditando.cia_operadora || "");
+      setCiaLogoUrl(trechoEditando.cia_logo_url || "");
+      setLocalizador(trechoEditando.codigo_localizador || "");
+      setValorPago(trechoEditando.valor_pago ? trechoEditando.valor_pago.toString() : "");
+      setPagoPelaInstituicao(trechoEditando.pago_pela_instituicao || false);
+    } else if (aberto && !trechoEditando) {
+      // Se for novo, limpa tudo
+      setTipoTransporte("voo"); setOrigem(""); setDestino(""); setDataPartida(""); setDataChegada("");
+      setCiaOperadora(""); setCiaLogoUrl(""); setLocalizador(""); setValorPago(""); setPagoPelaInstituicao(false);
+      setMostrarLinkManual(false);
+    }
+  }, [aberto, trechoEditando]);
+
+  // 🧠 Inteligência 2: Auto-Logo Espiã
+  useEffect(() => {
+    // Só aplica a auto-logo se não estivermos editando um registro antigo (para não apagar o que o usuário já fez)
+    if (!trechoEditando && ciaOperadora) {
+      const termo = ciaOperadora.toLowerCase().trim();
+      let encontrou = false;
+      
+      for (const [chave, url] of Object.entries(DIRETORIO_LOGOS)) {
+        if (termo.includes(chave)) {
+          setCiaLogoUrl(url);
+          encontrou = true;
+          break;
+        }
+      }
+      // Limpa a URL se o usuário apagar o nome da empresa ou digitar algo que não está na lista
+      if (!encontrou && !mostrarLinkManual) {
+        setCiaLogoUrl("");
+      }
+    }
+  }, [ciaOperadora, trechoEditando, mostrarLinkManual]);
 
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!viagemId) return toast.error("Nenhuma viagem selecionada.");
 
     setSalvando(true);
-    const toastId = toast.loading("Emitindo cartão de embarque...");
+    const toastId = toast.loading(trechoEditando ? "Atualizando bilhete..." : "Emitindo cartão de embarque...");
+
+    const dadosLogistica = {
+      viagem_id: viagemId,
+      tipo_transporte: tipoTransporte,
+      origem,
+      destino,
+      data_partida: dataPartida, 
+      data_chegada: dataChegada || null,
+      cia_operadora: ciaOperadora,
+      cia_logo_url: ciaLogoUrl,
+      codigo_localizador: localizador.toUpperCase(),
+      valor_pago: parseFloat(valorPago.replace(",", ".") || "0"),
+      pago_pela_instituicao: pagoPelaInstituicao,
+    };
 
     try {
-      const { error } = await supabase.from("trechos_logistica").insert([
-        {
-          viagem_id: viagemId,
-          tipo_transporte: tipoTransporte,
-          origem,
-          destino,
-          data_partida: dataPartida, // datetime-local formato YYYY-MM-DDTHH:mm
-          data_chegada: dataChegada || null,
-          cia_operadora: ciaOperadora,
-          codigo_localizador: localizador.toUpperCase(),
-          valor_pago: parseFloat(valorPago.replace(",", ".") || "0"),
-          pago_pela_instituicao: pagoPelaInstituicao,
-        },
-      ]);
-
-      if (error) throw error;
-
-      toast.success("Trecho logístico adicionado com sucesso! 🎟️", { id: toastId });
-      
-      // Limpa os dados principais para o próximo cadastro
-      setOrigem("");
-      setDestino("");
-      setDataPartida("");
-      setDataChegada("");
-      setLocalizador("");
-      setValorPago("");
+      if (trechoEditando) {
+        // MODO ATUALIZAÇÃO
+        const { error } = await supabase.from("trechos_logistica").update(dadosLogistica).eq('id', trechoEditando.id);
+        if (error) throw error;
+        toast.success("Trecho atualizado com sucesso! 🔄", { id: toastId });
+      } else {
+        // MODO INSERÇÃO
+        const { error } = await supabase.from("trechos_logistica").insert([dadosLogistica]);
+        if (error) throw error;
+        toast.success("Trecho logístico adicionado com sucesso! 🎟️", { id: toastId });
+      }
       
       aoSalvar();
       fechar();
@@ -81,11 +137,13 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: 
         {/* Cabeçalho */}
         <div className="flex items-center justify-between p-6 border-b border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/20">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Ticket size={20} />
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${trechoEditando ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'}`}>
+              {trechoEditando ? <RefreshCw size={20} /> : <Ticket size={20} />}
             </div>
             <div>
-              <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100 leading-tight">Novo Trecho</h3>
+              <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100 leading-tight">
+                {trechoEditando ? "Editar Trecho" : "Novo Trecho"}
+              </h3>
               <p className="text-xs text-stone-500 font-medium mt-0.5">Voo, Ônibus ou Carro</p>
             </div>
           </div>
@@ -98,7 +156,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: 
         <div className="flex-1 overflow-y-auto p-6">
           <form id="form-logistica" onSubmit={handleSalvar} className="space-y-6">
             
-            {/* Seletor Rápido de Tipo */}
             <div className="flex gap-2 p-1 bg-stone-100 dark:bg-stone-900 rounded-xl">
               <button type="button" onClick={() => setTipoTransporte("voo")} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${tipoTransporte === "voo" ? "bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"}`}>
                 <Plane size={16} /> Voo
@@ -108,7 +165,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: 
               </button>
             </div>
 
-            {/* Origem e Destino */}
             <div className="grid grid-cols-1 gap-4 relative">
               <div className="absolute left-[19px] top-10 bottom-10 w-0.5 bg-stone-200 dark:bg-stone-800 z-0 border-dashed border-l-2"></div>
               
@@ -118,7 +174,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: 
                   <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-900 border-2 border-white dark:border-stone-950 flex items-center justify-center shrink-0">
                     <MapPin size={16} className="text-stone-400" />
                   </div>
-                  <input required value={origem} onChange={(e) => setOrigem(e.target.value)} type="text" placeholder="Ex: REC (Recife)" className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium uppercase" />
+                  <input required value={origem} onChange={(e) => setOrigem(e.target.value)} type="text" placeholder="Ex: REC" className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium uppercase" />
                 </div>
               </div>
 
@@ -128,12 +184,11 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: 
                   <div className="w-10 h-10 rounded-full bg-stone-900 dark:bg-stone-100 border-2 border-white dark:border-stone-950 flex items-center justify-center shrink-0 text-white dark:text-stone-900">
                     <MapPin size={16} />
                   </div>
-                  <input required value={destino} onChange={(e) => setDestino(e.target.value)} type="text" placeholder="Ex: SLZ (São Luís)" className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium uppercase" />
+                  <input required value={destino} onChange={(e) => setDestino(e.target.value)} type="text" placeholder="Ex: SLZ" className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium uppercase" />
                 </div>
               </div>
             </div>
 
-            {/* Datas e Horários */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 group">
                 <label className="text-sm font-semibold text-stone-600 dark:text-stone-400 flex items-center gap-2">
@@ -149,21 +204,40 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: 
               </div>
             </div>
 
-            {/* Cia e Localizador */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2 group">
-                <label className="text-sm font-semibold text-stone-600 dark:text-stone-400">Cia / Viação</label>
-                <input value={ciaOperadora} onChange={(e) => setCiaOperadora(e.target.value)} type="text" placeholder="Ex: Azul" className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm" />
+            {/* Inteligência de Cia & Logo */}
+            <div className="space-y-4 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-950/10">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                  <Sparkles size={12} /> Auto-Logo Ativado
+                </h4>
+                <button type="button" onClick={() => setMostrarLinkManual(!mostrarLinkManual)} className="text-[10px] text-stone-400 hover:text-indigo-600 underline">
+                  Inserir link manual
+                </button>
               </div>
-              <div className="space-y-2 group">
-                <label className="text-sm font-semibold text-stone-600 dark:text-stone-400">Localizador</label>
-                <input value={localizador} onChange={(e) => setLocalizador(e.target.value)} type="text" placeholder="Ex: XY89ZK" className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm uppercase font-mono font-bold text-indigo-600" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2 group">
+                  <label className="text-xs font-semibold text-stone-500">Cia / Viação</label>
+                  <input value={ciaOperadora} onChange={(e) => setCiaOperadora(e.target.value)} type="text" placeholder="Ex: Azul ou Latam" className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm shadow-sm" />
+                </div>
+                <div className="space-y-2 group">
+                  <label className="text-xs font-semibold text-stone-500">Localizador</label>
+                  <input value={localizador} onChange={(e) => setLocalizador(e.target.value)} type="text" placeholder="Ex: XY89ZK" className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm uppercase font-mono font-bold text-indigo-600 shadow-sm" />
+                </div>
               </div>
+              
+              {(mostrarLinkManual || ciaLogoUrl) && (
+                <div className="space-y-2 group animate-in fade-in slide-in-from-top-2">
+                  <label className="text-xs font-semibold text-stone-500 flex items-center gap-1">
+                    <LinkIcon size={12} /> {ciaLogoUrl ? "Logo capturada:" : "Link da Logo:"}
+                  </label>
+                  <input value={ciaLogoUrl} onChange={(e) => setCiaLogoUrl(e.target.value)} type="url" placeholder="https://..." className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-xs text-stone-500 truncate" />
+                </div>
+              )}
             </div>
 
             <div className="h-px bg-stone-100 dark:bg-stone-800 w-full my-4"></div>
 
-            {/* Financeiro */}
             <div className="space-y-4">
               <div className="space-y-2 group">
                 <label className="text-sm font-semibold text-stone-600 dark:text-stone-400 flex items-center gap-2">
@@ -172,7 +246,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: 
                 <input value={valorPago} onChange={(e) => setValorPago(e.target.value)} type="number" step="0.01" placeholder="0,00" className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-mono text-lg" />
               </div>
               
-              {/* Toggle de Pagamento Institucional */}
               <label className="flex items-start gap-3 p-4 border border-stone-200 dark:border-stone-800 rounded-xl cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-900/50 transition-colors">
                 <div className="mt-0.5">
                   <input type="checkbox" checked={pagoPelaInstituicao} onChange={(e) => setPagoPelaInstituicao(e.target.checked)} className="w-5 h-5 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500/50 cursor-pointer" />
@@ -189,12 +262,12 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId }: 
           </form>
         </div>
 
-        {/* Rodapé */}
         <div className="p-6 border-t border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/20 flex gap-3">
           <button type="button" onClick={fechar} className="flex-1 py-3.5 px-4 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 rounded-xl font-bold hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors">Cancelar</button>
-          <button type="submit" form="form-logistica" disabled={salvando} className="flex-1 py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0">
-            {salvando ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-            <span>Emitir Bilhete</span>
+          
+          <button type="submit" form="form-logistica" disabled={salvando} className={`flex-1 py-3.5 px-4 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0 ${trechoEditando ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+            {salvando ? <Loader2 size={20} className="animate-spin" /> : (trechoEditando ? <RefreshCw size={20} /> : <Save size={20} />)}
+            <span>{trechoEditando ? "Atualizar" : "Emitir Bilhete"}</span>
           </button>
         </div>
 
