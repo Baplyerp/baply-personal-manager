@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plane, Plus, Loader2, MapPin, Briefcase, TrendingUp, ShieldCheck, Ticket, Calendar, Bus, ArrowRight, Building } from "lucide-react";
+import { Plane, Plus, Loader2, MapPin, Briefcase, TrendingUp, ShieldCheck, Ticket, Calendar, Bus, ArrowRight, Building, DollarSign } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { usePerfil } from "@/contexts/PerfilContext";
