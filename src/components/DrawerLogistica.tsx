@@ -13,15 +13,15 @@ type DrawerLogisticaProps = {
   trechoEditando?: any;
 };
 
-// 🧠 Logoteca Definitiva (Usando Unavatar.io - Agregador open-source que não bloqueia hotlink)
+// 🧠 Logoteca Sniper (Forçando o provedor do Twitter/X via Unavatar para ignorar bloqueios de site)
 const DIRETORIO_LOGOS: Record<string, string> = {
-  "azul": "https://unavatar.io/voeazul.com.br",
-  "gol": "https://unavatar.io/voegol.com.br",
-  "latam": "https://unavatar.io/latamairlines.com",
-  "guanabara": "https://unavatar.io/viajeguanabara.com.br",
-  "cometa": "https://unavatar.io/viacaocometa.com.br",
-  "tap": "https://unavatar.io/flytap.com",
-  "motriz": "https://unavatar.io/institutomotriz.org.br",
+  "azul": "https://unavatar.io/twitter/azullinhasaereas",
+  "gol": "https://unavatar.io/twitter/VoeGOLoficial",
+  "latam": "https://unavatar.io/twitter/LATAM_BRA",
+  "guanabara": "https://unavatar.io/twitter/viajeguanabara",
+  "cometa": "https://unavatar.io/twitter/ViacaoCometaSA",
+  "tap": "https://unavatar.io/twitter/tapairportugal",
+  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png", // O seu ecossistema mantém o link direto que já funciona
 };
 
 export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, trechoEditando }: DrawerLogisticaProps) {
