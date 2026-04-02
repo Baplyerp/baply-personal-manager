@@ -13,16 +13,34 @@ type DrawerLogisticaProps = {
   trechoEditando?: any;
 };
 
-// 🧠 O Cofre Blindado de Logos (Imagens da Wikipedia, CDN Global, Sem Bloqueios)
-const DIRETORIO_LOGOS: Record<string, string> = {
-  "azul": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Azul_Brazilian_Airlines_logo.svg/512px-Azul_Brazilian_Airlines_logo.svg.png",
-  "gol": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg/512px-GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg.png",
-  "latam": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LATAM_Airlines_logo.svg/512px-LATAM_Airlines_logo.svg.png",
-  "guanabara": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Guanabara_2023.png/320px-Logo_Guanabara_2023.png",
-  "cometa": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Viacao_cometa_logo.png",
-  "progresso": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Auto_Via%C3%A7%C3%A3o_Progresso_logo.png/320px-Auto_Via%C3%A7%C3%A3o_Progresso_logo.png",
-  "tap": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/TAP_Air_Portugal_logo.svg/512px-TAP_Air_Portugal_logo.svg.png",
-  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png",
+// 🧠 O Motor em Cascata (Cascade Resolution Engine)
+const inferirLogoInteligente = (nomeDigitado: string) => {
+  if (!nomeDigitado) return "";
+  const termo = nomeDigitado.toLowerCase().trim();
+
+  // CAMADA 1: Cofre VIP (Correspondência Exata e Segura)
+  if (termo.includes("azul")) return "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/LOGO_AZUL_LINHAS_AEREAS.png/960px-LOGO_AZUL_LINHAS_AEREAS.png";
+  if (termo.includes("gol")) return "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg/512px-GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg.png";
+  if (termo.includes("latam")) return "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LATAM_Airlines_logo.svg/512px-LATAM_Airlines_logo.svg.png";
+  if (termo.includes("guanabara")) return "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Guanabara_2023.png/320px-Logo_Guanabara_2023.png";
+  if (termo.includes("cometa")) return "https://upload.wikimedia.org/wikipedia/commons/7/7b/Viacao_cometa_logo.png";
+  if (termo.includes("progresso")) return "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Auto_Via%C3%A7%C3%A3o_Progresso_logo.png/320px-Auto_Via%C3%A7%C3%A3o_Progresso_logo.png";
+  if (termo.includes("tap")) return "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/TAP_Air_Portugal_logo.svg/512px-TAP_Air_Portugal_logo.svg.png";
+  if (termo.includes("motriz")) return "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png";
+
+  // CAMADA 2: Heurística do Google Favicon (Transforma nome em domínio)
+  const dominioLimpo = termo
+    .normalize("NFD") // Separa os acentos
+    .replace(/[\u0300-\u036f]/g, "") // Remove os acentos
+    .replace(/[^a-z0-9]/g, ""); // Remove espaços e caracteres especiais
+
+  if (dominioLimpo.length > 2) {
+    // Busca no cache global do Google (sz=256 força alta resolução)
+    return `https://www.google.com/s2/favicons?domain=${dominioLimpo}.com.br&sz=256`;
+  }
+
+  // CAMADA 3: Retorna vazio para permitir Fallback Manual
+  return "";
 };
 
 export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, trechoEditando }: DrawerLogisticaProps) {
@@ -53,9 +71,11 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
       setValorPago(trechoEditando.valor_pago ? trechoEditando.valor_pago.toString() : "");
       setPagoPelaInstituicao(trechoEditando.pago_pela_instituicao || false);
       
-      // Abre o link manual se houver URL salva que não seja do nosso diretório automático
-      const urlSalvaÉExterna = trechoEditando.cia_logo_url && !Object.values(DIRETORIO_LOGOS).includes(trechoEditando.cia_logo_url);
-      setMostrarLinkManual(urlSalvaÉExterna);
+      // Abre o link manual se houver URL salva e não for gerada automaticamente
+      const urlGerada = inferirLogoInteligente(trechoEditando.cia_operadora || "");
+      if (trechoEditando.cia_logo_url && trechoEditando.cia_logo_url !== urlGerada) {
+        setMostrarLinkManual(true);
+      }
     } else if (aberto && !trechoEditando) {
       setTipoTransporte("voo"); setOrigem(""); setDestino(""); setDataPartida(""); setDataChegada("");
       setCiaOperadora(""); setCiaLogoUrl(""); setLocalizador(""); setValorPago(""); setPagoPelaInstituicao(false);
@@ -63,24 +83,17 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
     }
   }, [aberto, trechoEditando]);
 
-  // Inteligência Local de Busca (Rápida e sem APIs instáveis)
+  // Aplica o Motor Inteligente enquanto o utilizador digita
   useEffect(() => {
     if (!mostrarLinkManual) {
-      const termo = ciaOperadora.toLowerCase().trim();
-      let encontrou = false;
+      const logoGerada = inferirLogoInteligente(ciaOperadora);
       
-      for (const [chave, url] of Object.entries(DIRETORIO_LOGOS)) {
-        if (termo.includes(chave)) {
-          setCiaLogoUrl(url);
-          encontrou = true;
-          break;
-        }
+      // Protege para não apagar a logo caso estejamos no modo de edição e não tenhamos modificado o nome
+      if (trechoEditando && trechoEditando.cia_operadora === ciaOperadora) {
+        return; // Mantém a que veio da base de dados
       }
       
-      // Se não achou no diretório e não é edição com URL customizada, limpa para mostrar o ícone padrão (Avião/Ônibus)
-      if (!encontrou && (!trechoEditando || trechoEditando.cia_operadora !== ciaOperadora)) {
-        setCiaLogoUrl("");
-      }
+      setCiaLogoUrl(logoGerada);
     }
   }, [ciaOperadora, mostrarLinkManual, trechoEditando]);
 
@@ -205,7 +218,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
                   <Sparkles size={12} className={ciaLogoUrl && !mostrarLinkManual ? "animate-pulse text-amber-500" : ""} /> 
-                  {ciaLogoUrl && !mostrarLinkManual ? "Logo Encontrada" : "Auto-Logo Nativa"}
+                  {ciaLogoUrl && !mostrarLinkManual ? "Motor AI Ativado" : "Auto-Logo Nativa"}
                 </h4>
                 <button type="button" onClick={() => setMostrarLinkManual(!mostrarLinkManual)} className="text-[10px] text-stone-400 hover:text-indigo-600 underline">
                   Inserir link manual
@@ -225,7 +238,12 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
                     />
                     {ciaLogoUrl && (
                       <div className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg overflow-hidden bg-white shadow-sm border border-stone-100 animate-in zoom-in duration-300">
-                        <img src={ciaLogoUrl} alt="Preview" className="w-full h-full object-contain p-1" />
+                        <img src={ciaLogoUrl} alt="Preview" className="w-full h-full object-contain p-1" 
+                          onError={(e) => {
+                            // Se o favicon do Google falhar silenciosamente, escondemos a imagem quebrada
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
                       </div>
                     )}
                   </div>

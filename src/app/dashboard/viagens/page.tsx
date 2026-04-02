@@ -87,19 +87,29 @@ export default function ViagensPage() {
     setDrawerLogisticaAberto(true);
   };
 
-  // 🧠 Sincronizado com o Cofre Blindado (Falha Zero)
+  // 🧠 O Motor em Cascata (Cascade Resolution Engine) espelhado na view principal
   const obterLogoSegura = (nomeCia: string, urlSalva?: string) => {
     if (urlSalva) return urlSalva; 
     if (!nomeCia) return null;
     
-    const nome = nomeCia.toLowerCase();
-    if (nome.includes('azul')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Azul_Brazilian_Airlines_logo.svg/512px-Azul_Brazilian_Airlines_logo.svg.png';
-    if (nome.includes('gol')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg/512px-GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg.png';
-    if (nome.includes('latam')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LATAM_Airlines_logo.svg/512px-LATAM_Airlines_logo.svg.png';
-    if (nome.includes('guanabara')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Guanabara_2023.png/320px-Logo_Guanabara_2023.png';
-    if (nome.includes('cometa')) return 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Viacao_cometa_logo.png';
-    if (nome.includes('progresso')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Auto_Via%C3%A7%C3%A3o_Progresso_logo.png/320px-Auto_Via%C3%A7%C3%A3o_Progresso_logo.png';
+    const termo = nomeCia.toLowerCase().trim();
     
+    // CAMADA 1: Cofre VIP
+    if (termo.includes('azul')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/LOGO_AZUL_LINHAS_AEREAS.png/960px-LOGO_AZUL_LINHAS_AEREAS.png';
+    if (termo.includes('gol')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg/512px-GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg.png';
+    if (termo.includes('latam')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LATAM_Airlines_logo.svg/512px-LATAM_Airlines_logo.svg.png';
+    if (termo.includes('guanabara')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Guanabara_2023.png/320px-Logo_Guanabara_2023.png';
+    if (termo.includes('cometa')) return 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Viacao_cometa_logo.png';
+    if (termo.includes('progresso')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Auto_Via%C3%A7%C3%A3o_Progresso_logo.png/320px-Auto_Via%C3%A7%C3%A3o_Progresso_logo.png';
+    if (termo.includes("tap")) return "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/TAP_Air_Portugal_logo.svg/512px-TAP_Air_Portugal_logo.svg.png";
+    if (termo.includes('motriz')) return 'https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png';
+    
+    // CAMADA 2: Heurística do Google Favicon
+    const dominioLimpo = termo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    if (dominioLimpo.length > 2) {
+      return `https://www.google.com/s2/favicons?domain=${dominioLimpo}.com.br&sz=256`;
+    }
+
     return null; 
   };
 
@@ -215,7 +225,6 @@ export default function ViagensPage() {
                   ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {viagem.trechos_logistica.map((trecho: any) => {
-                        // O Fallback Automático atua aqui
                         const logoDefinitiva = obterLogoSegura(trecho.cia_operadora, trecho.cia_logo_url);
                         
                         return (
@@ -229,10 +238,16 @@ export default function ViagensPage() {
                               <div className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-stone-50/50 dark:bg-stone-950/50 border-b border-l border-stone-200 dark:border-stone-800 z-10"></div>
                               <div className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full bg-stone-50/50 dark:bg-stone-950/50 border-t border-l border-stone-200 dark:border-stone-800 z-10"></div>
                               
-                              {/* Lógica Segura de Logo vs Ícone Padrão */}
                               {logoDefinitiva ? (
                                 <div className="w-12 h-12 rounded-full mb-2 shadow-sm border border-stone-200 dark:border-stone-700 overflow-hidden flex items-center justify-center bg-white relative z-0">
-                                  <img src={logoDefinitiva} alt={trecho.cia_operadora} className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500" />
+                                  <img 
+                                    src={logoDefinitiva} 
+                                    alt={trecho.cia_operadora} 
+                                    className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                  />
                                 </div>
                               ) : (
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white mb-2 shadow-sm relative z-0 group-hover:scale-110 transition-transform duration-500 ${trecho.tipo_transporte === 'voo' ? 'bg-indigo-500' : 'bg-amber-500'}`}>
