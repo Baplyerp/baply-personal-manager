@@ -1,50 +1,66 @@
 "use client";
 
-import { useState } from "react";
-import { X, PlaneTakeoff, Calendar, Save, Loader2, Target, Map } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, PlaneTakeoff, Calendar, Save, Loader2, Target, Map, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 type DrawerViagemProps = {
   aberto: boolean;
   fechar: () => void;
-  aoSalvar: () => void; // Função para avisar a página que precisa recarregar a lista
+  aoSalvar: () => void;
+  viagemEditando?: any; // 👈 A inteligência de edição entra aqui
 };
 
-export default function DrawerViagem({ aberto, fechar, aoSalvar }: DrawerViagemProps) {
+export default function DrawerViagem({ aberto, fechar, aoSalvar, viagemEditando }: DrawerViagemProps) {
   const [salvando, setSalvando] = useState(false);
   const [titulo, setTitulo] = useState("");
   const [proposito, setProposito] = useState("mudanca");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
 
-  const handleSalvar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSalvando(true);
-    const toastId = toast.loading("Mapeando novo roteiro...");
-
-    try {
-      const { error } = await supabase.from("viagens").insert([
-        {
-          titulo,
-          proposito,
-          data_inicio: dataInicio || null,
-          data_fim: dataFim || null,
-          status: "planejamento", // Toda viagem nasce como planejamento
-        },
-      ]);
-
-      if (error) throw error;
-
-      toast.success("Roteiro mapeado com sucesso! ✈️", { id: toastId });
-      
-      // Limpa o formulário para a próxima vez
+  // 🧠 Inteligência: Preenche os dados se estiver no Modo Edição
+  useEffect(() => {
+    if (aberto && viagemEditando) {
+      setTitulo(viagemEditando.titulo || "");
+      setProposito(viagemEditando.proposito || "mudanca");
+      // Trata a data para exibir corretamente no formato YYYY-MM-DD
+      setDataInicio(viagemEditando.data_inicio ? viagemEditando.data_inicio.split("T")[0] : "");
+      setDataFim(viagemEditando.data_fim ? viagemEditando.data_fim.split("T")[0] : "");
+    } else if (aberto && !viagemEditando) {
+      // Se for um novo roteiro, garante que o formulário está limpo
       setTitulo("");
       setProposito("mudanca");
       setDataInicio("");
       setDataFim("");
+    }
+  }, [aberto, viagemEditando]);
+
+  const handleSalvar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSalvando(true);
+    const toastId = toast.loading(viagemEditando ? "A atualizar projeto..." : "A mapear novo roteiro...");
+
+    const dados = {
+      titulo,
+      proposito,
+      data_inicio: dataInicio || null,
+      data_fim: dataFim || null,
+    };
+
+    try {
+      if (viagemEditando) {
+        // MODO ATUALIZAÇÃO (UPDATE)
+        const { error } = await supabase.from("viagens").update(dados).eq("id", viagemEditando.id);
+        if (error) throw error;
+        toast.success("Roteiro atualizado com sucesso! 🔄", { id: toastId });
+      } else {
+        // MODO CRIAÇÃO (INSERT)
+        const { error } = await supabase.from("viagens").insert([{ ...dados, status: "planejamento" }]);
+        if (error) throw error;
+        toast.success("Roteiro mapeado com sucesso! ✈️", { id: toastId });
+      }
       
-      // Avisa a página mãe para atualizar a tela e fecha o drawer
       aoSalvar();
       fechar();
     } catch (error: any) {
@@ -70,11 +86,13 @@ export default function DrawerViagem({ aberto, fechar, aoSalvar }: DrawerViagemP
         {/* Cabeçalho do Drawer */}
         <div className="flex items-center justify-between p-6 border-b border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/20">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-[#A67B5B]/10 rounded-xl flex items-center justify-center text-[#A67B5B]">
-              <PlaneTakeoff size={20} />
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${viagemEditando ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-[#A67B5B]/10 text-[#A67B5B]'}`}>
+              {viagemEditando ? <RefreshCw size={20} /> : <PlaneTakeoff size={20} />}
             </div>
             <div>
-              <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100 leading-tight">Novo Roteiro</h3>
+              <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100 leading-tight">
+                {viagemEditando ? "Editar Roteiro" : "Novo Roteiro"}
+              </h3>
               <p className="text-xs text-stone-500 font-medium mt-0.5">Módulo de Transição & Viagens</p>
             </div>
           </div>
@@ -163,10 +181,10 @@ export default function DrawerViagem({ aberto, fechar, aoSalvar }: DrawerViagemP
             type="submit" 
             form="form-viagem" 
             disabled={salvando} 
-            className="flex-1 py-3.5 px-4 bg-[#A67B5B] hover:bg-[#8a6347] text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
+            className={`flex-1 py-3.5 px-4 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0 ${viagemEditando ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[#A67B5B] hover:bg-[#8a6347]'}`}
           >
-            {salvando ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-            <span>Criar Projeto</span>
+            {salvando ? <Loader2 size={20} className="animate-spin" /> : (viagemEditando ? <RefreshCw size={20} /> : <Save size={20} />)}
+            <span>{viagemEditando ? "Atualizar" : "Criar Projeto"}</span>
           </button>
         </div>
 
