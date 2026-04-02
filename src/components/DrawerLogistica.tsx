@@ -13,22 +13,21 @@ type DrawerLogisticaProps = {
   trechoEditando?: any;
 };
 
-// 🧠 Logoteca Blindada (Fontes Oficiais da Wikimedia Commons - Não falham, não bloqueiam)
+// 🧠 Logoteca Definitiva (Usando Unavatar.io - Agregador open-source que não bloqueia hotlink)
 const DIRETORIO_LOGOS: Record<string, string> = {
-  "azul": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Azul_Brazilian_Airlines_logo.svg/512px-Azul_Brazilian_Airlines_logo.svg.png",
-  "gol": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg/512px-GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg.png",
-  "latam": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LATAM_Airlines_logo.svg/512px-LATAM_Airlines_logo.svg.png",
-  "guanabara": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Guanabara_2023.png/320px-Logo_Guanabara_2023.png",
-  "cometa": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Viacao_cometa_logo.png",
-  "tap": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/TAP_Air_Portugal_logo.svg/512px-TAP_Air_Portugal_logo.svg.png",
-  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png",
+  "azul": "https://unavatar.io/voeazul.com.br",
+  "gol": "https://unavatar.io/voegol.com.br",
+  "latam": "https://unavatar.io/latamairlines.com",
+  "guanabara": "https://unavatar.io/viajeguanabara.com.br",
+  "cometa": "https://unavatar.io/viacaocometa.com.br",
+  "tap": "https://unavatar.io/flytap.com",
+  "motriz": "https://unavatar.io/institutomotriz.org.br",
 };
 
 export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, trechoEditando }: DrawerLogisticaProps) {
   const [salvando, setSalvando] = useState(false);
   const [mostrarLinkManual, setMostrarLinkManual] = useState(false);
 
-  // Estados do Formulário
   const [tipoTransporte, setTipoTransporte] = useState("voo");
   const [origem, setOrigem] = useState("");
   const [destino, setDestino] = useState("");
@@ -40,7 +39,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
   const [valorPago, setValorPago] = useState("");
   const [pagoPelaInstituicao, setPagoPelaInstituicao] = useState(false);
 
-  // Modo Edição: Carrega os dados quando aberto
   useEffect(() => {
     if (aberto && trechoEditando) {
       setTipoTransporte(trechoEditando.tipo_transporte || "voo");
@@ -61,7 +59,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
     }
   }, [aberto, trechoEditando]);
 
-  // Motor Inteligente de Busca de Logo (Agora usa fontes seguras)
   useEffect(() => {
     if (ciaOperadora && !mostrarLinkManual) {
       const termo = ciaOperadora.toLowerCase().trim();
@@ -130,7 +127,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
 
       <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-stone-950 shadow-2xl border-l border-stone-200 dark:border-stone-800 z-50 animate-in slide-in-from-right duration-500 flex flex-col">
         
-        {/* Cabeçalho */}
         <div className="flex items-center justify-between p-6 border-b border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/20">
           <div className="flex items-center gap-3">
             <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${trechoEditando ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'}`}>
@@ -148,7 +144,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
           </button>
         </div>
 
-        {/* Corpo do Formulário */}
         <div className="flex-1 overflow-y-auto p-6">
           <form id="form-logistica" onSubmit={handleSalvar} className="space-y-6">
             
@@ -200,7 +195,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
               </div>
             </div>
 
-            {/* Inteligência de Cia & Logo */}
             <div className="space-y-4 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-950/10 transition-all">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
@@ -274,7 +268,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
 
         <div className="p-6 border-t border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/20 flex gap-3">
           <button type="button" onClick={fechar} className="flex-1 py-3.5 px-4 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 rounded-xl font-bold hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors">Cancelar</button>
-          
           <button type="submit" form="form-logistica" disabled={salvando} className={`flex-1 py-3.5 px-4 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0 ${trechoEditando ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
             {salvando ? <Loader2 size={20} className="animate-spin" /> : (trechoEditando ? <RefreshCw size={20} /> : <Save size={20} />)}
             <span>{trechoEditando ? "Atualizar" : "Emitir Bilhete"}</span>

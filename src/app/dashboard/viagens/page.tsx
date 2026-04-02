@@ -20,7 +20,6 @@ export default function ViagensPage() {
   const [viagemSelecionadaId, setViagemSelecionadaId] = useState<string | null>(null);
   const [trechoSendoEditado, setTrechoSendoEditado] = useState<any>(null);
 
-  // 🧠 ESTADOS DINÂMICOS
   const [custoTotal, setCustoTotal] = useState(0);
   const [beneficios, setBeneficios] = useState(0);
   
@@ -88,17 +87,17 @@ export default function ViagensPage() {
     setDrawerLogisticaAberto(true);
   };
 
-  // 🧠 Motor de Imagens Ampliado e Blindado
+  // 🧠 Agora a tela também lê os avatares via Unavatar.io
   const obterLogoSegura = (nomeCia: string, urlSalva?: string) => {
     if (urlSalva) return urlSalva; 
     if (!nomeCia) return null;
     
     const nome = nomeCia.toLowerCase();
-    // Alta resolução, fundos transparentes da Wikipedia
-    if (nome.includes('azul')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Azul_Brazilian_Airlines_logo.svg/512px-Azul_Brazilian_Airlines_logo.svg.png';
-    if (nome.includes('gol')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg/512px-GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg.png';
-    if (nome.includes('latam')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LATAM_Airlines_logo.svg/512px-LATAM_Airlines_logo.svg.png';
-    if (nome.includes('guanabara')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Guanabara_2023.png/320px-Logo_Guanabara_2023.png';
+    if (nome.includes('azul')) return 'https://unavatar.io/voeazul.com.br';
+    if (nome.includes('gol')) return 'https://unavatar.io/voegol.com.br';
+    if (nome.includes('latam')) return 'https://unavatar.io/latamairlines.com';
+    if (nome.includes('guanabara')) return 'https://unavatar.io/viajeguanabara.com.br';
+    if (nome.includes('cometa')) return 'https://unavatar.io/viacaocometa.com.br';
     
     return null; 
   };
@@ -113,7 +112,6 @@ export default function ViagensPage() {
     <>
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         
-        {/* Cabeçalho */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50 flex items-center gap-3">
@@ -130,10 +128,7 @@ export default function ViagensPage() {
           </button>
         </div>
 
-        {/* 📈 Painéis com Vida (Animações de Levitação e Brilho) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          
-          {/* Card: Custo */}
           <div className="p-6 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col justify-between group hover:shadow-xl hover:shadow-rose-500/10 hover:border-rose-200 dark:hover:border-rose-900/50 hover:-translate-y-1 transition-all duration-500 cursor-default">
             <p className="text-sm font-semibold text-stone-500 flex items-center gap-2">
               <Briefcase size={16} className="text-stone-400 group-hover:text-rose-500 transition-colors duration-300"/> 
@@ -144,7 +139,6 @@ export default function ViagensPage() {
             </p>
           </div>
 
-          {/* Card: Benefícios */}
           <div className="p-6 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col justify-between group hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:-translate-y-1 transition-all duration-500 cursor-default">
             <p className="text-sm font-semibold text-stone-500 flex items-center gap-2">
               <ShieldCheck size={16} className="text-emerald-500 group-hover:scale-110 transition-transform duration-300"/> 
@@ -155,13 +149,10 @@ export default function ViagensPage() {
             </p>
           </div>
 
-          {/* Card: Payback Premium */}
           <div className="p-6 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-950 rounded-3xl border border-stone-800 shadow-lg flex flex-col justify-between md:col-span-2 text-white relative overflow-hidden group hover:shadow-2xl hover:shadow-[#A67B5B]/20 hover:-translate-y-1 transition-all duration-500 cursor-default">
-            {/* Ícone de Fundo com Animação Dinâmica */}
             <div className="absolute right-0 top-0 opacity-10 scale-150 -translate-y-1/4 translate-x-1/4 group-hover:rotate-12 group-hover:scale-125 transition-transform duration-700 ease-out">
               <TrendingUp size={120} />
             </div>
-            
             <div className="relative z-10">
               <p className="text-sm font-semibold text-stone-400 group-hover:text-stone-300 transition-colors duration-300">Métrica de Recuperação (Payback)</p>
               <div className="flex items-end gap-4 mt-2">
@@ -176,7 +167,6 @@ export default function ViagensPage() {
           </div>
         </div>
 
-        {/* Área de Roteiros */}
         {carregando ? (
           <div className="flex justify-center p-12"><Loader2 className="animate-spin text-[#A67B5B]" size={40} /></div>
         ) : viagens.length === 0 ? (
@@ -189,7 +179,6 @@ export default function ViagensPage() {
             {viagens.map((viagem) => (
               <div key={viagem.id} className="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-sm overflow-hidden group/viagem">
                 
-                {/* Header do Roteiro */}
                 <div className="p-6 border-b border-stone-100 dark:border-stone-800 flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
                   
                   <button onClick={() => abrirEdicaoViagem(viagem)} className="absolute top-4 right-4 p-2 text-stone-300 hover:text-[#A67B5B] bg-stone-50 hover:bg-[#A67B5B]/10 dark:bg-stone-800 dark:hover:bg-[#A67B5B]/20 rounded-full transition-all md:hidden group-hover/viagem:flex z-10" title="Editar Projeto">
@@ -216,7 +205,6 @@ export default function ViagensPage() {
                   </div>
                 </div>
                 
-                {/* Boarding Passes (Trechos) */}
                 <div className="p-6 bg-stone-50/50 dark:bg-stone-950/50">
                   {(!viagem.trechos_logistica || viagem.trechos_logistica.length === 0) ? (
                     <div className="text-center py-6">
@@ -239,7 +227,6 @@ export default function ViagensPage() {
                               <div className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-stone-50/50 dark:bg-stone-950/50 border-b border-l border-stone-200 dark:border-stone-800 z-10"></div>
                               <div className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full bg-stone-50/50 dark:bg-stone-950/50 border-t border-l border-stone-200 dark:border-stone-800 z-10"></div>
                               
-                              {/* Transformação da Logo Perfeita */}
                               {logoDefinitiva ? (
                                 <div className="w-12 h-12 rounded-full mb-2 shadow-sm border border-stone-200 dark:border-stone-700 overflow-hidden flex items-center justify-center bg-white relative z-0">
                                   <img src={logoDefinitiva} alt={trecho.cia_operadora} className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500" />
