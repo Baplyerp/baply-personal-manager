@@ -13,17 +13,15 @@ type DrawerLogisticaProps = {
   trechoEditando?: any;
 };
 
-// 🧠 A Logoteca Inteligente (Agora usando Clearbit API para logos oficiais de alta qualidade)
+// 🧠 Logoteca Blindada (Fontes Oficiais da Wikimedia Commons - Não falham, não bloqueiam)
 const DIRETORIO_LOGOS: Record<string, string> = {
-  "azul": "https://logo.clearbit.com/voeazul.com.br",
-  "gol": "https://logo.clearbit.com/voegol.com.br",
-  "latam": "https://logo.clearbit.com/latamairlines.com",
-  "guanabara": "https://logo.clearbit.com/viajeguanabara.com.br",
-  "cometa": "https://logo.clearbit.com/viacaocometa.com.br",
-  "1001": "https://logo.clearbit.com/autoviaca1001.com.br",
-  "progresso": "https://logo.clearbit.com/viacaoprogresso.com.br",
-  "aguia branca": "https://logo.clearbit.com/aguiabranca.com.br",
-  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png", // Seu ecossistema
+  "azul": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Azul_Brazilian_Airlines_logo.svg/512px-Azul_Brazilian_Airlines_logo.svg.png",
+  "gol": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg/512px-GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg.png",
+  "latam": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LATAM_Airlines_logo.svg/512px-LATAM_Airlines_logo.svg.png",
+  "guanabara": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Guanabara_2023.png/320px-Logo_Guanabara_2023.png",
+  "cometa": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Viacao_cometa_logo.png",
+  "tap": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/TAP_Air_Portugal_logo.svg/512px-TAP_Air_Portugal_logo.svg.png",
+  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png",
 };
 
 export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, trechoEditando }: DrawerLogisticaProps) {
@@ -55,6 +53,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
       setLocalizador(trechoEditando.codigo_localizador || "");
       setValorPago(trechoEditando.valor_pago ? trechoEditando.valor_pago.toString() : "");
       setPagoPelaInstituicao(trechoEditando.pago_pela_instituicao || false);
+      setMostrarLinkManual(!!trechoEditando.cia_logo_url && !Object.values(DIRETORIO_LOGOS).includes(trechoEditando.cia_logo_url));
     } else if (aberto && !trechoEditando) {
       setTipoTransporte("voo"); setOrigem(""); setDestino(""); setDataPartida(""); setDataChegada("");
       setCiaOperadora(""); setCiaLogoUrl(""); setLocalizador(""); setValorPago(""); setPagoPelaInstituicao(false);
@@ -62,10 +61,9 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
     }
   }, [aberto, trechoEditando]);
 
-  // Motor Inteligente de Busca de Logo
+  // Motor Inteligente de Busca de Logo (Agora usa fontes seguras)
   useEffect(() => {
-    // Só pesquisa automaticamente se não for edição ou se o link manual não estiver aberto
-    if (!trechoEditando && ciaOperadora && !mostrarLinkManual) {
+    if (ciaOperadora && !mostrarLinkManual) {
       const termo = ciaOperadora.toLowerCase().trim();
       let encontrou = false;
       
@@ -77,11 +75,11 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
         }
       }
       
-      if (!encontrou) {
+      if (!encontrou && !trechoEditando?.cia_logo_url) {
         setCiaLogoUrl("");
       }
     }
-  }, [ciaOperadora, trechoEditando, mostrarLinkManual]);
+  }, [ciaOperadora, mostrarLinkManual, trechoEditando]);
 
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,7 +205,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
                   <Sparkles size={12} className={ciaLogoUrl && !mostrarLinkManual ? "animate-pulse text-amber-500" : ""} /> 
-                  {ciaLogoUrl && !mostrarLinkManual ? "Logo Capturada!" : "Auto-Logo Web"}
+                  {ciaLogoUrl && !mostrarLinkManual ? "Logo Capturada!" : "Auto-Logo Nativa"}
                 </h4>
                 <button type="button" onClick={() => setMostrarLinkManual(!mostrarLinkManual)} className="text-[10px] text-stone-400 hover:text-indigo-600 underline">
                   Inserir link manual
@@ -217,7 +215,6 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2 group">
                   <label className="text-xs font-semibold text-stone-500">Cia / Viação</label>
-                  {/* ✨ O Campo com Preview Mágico ao Vivo ✨ */}
                   <div className="relative">
                     <input 
                       value={ciaOperadora} 
