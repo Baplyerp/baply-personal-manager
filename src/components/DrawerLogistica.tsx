@@ -13,15 +13,16 @@ type DrawerLogisticaProps = {
   trechoEditando?: any;
 };
 
-// 🧠 Logoteca Sniper (Forçando o provedor do Twitter/X via Unavatar para ignorar bloqueios de site)
+// 🧠 O Cofre Blindado de Logos (Imagens da Wikipedia, CDN Global, Sem Bloqueios)
 const DIRETORIO_LOGOS: Record<string, string> = {
-  "azul": "https://unavatar.io/twitter/azullinhasaereas",
-  "gol": "https://unavatar.io/twitter/VoeGOLoficial",
-  "latam": "https://unavatar.io/twitter/LATAM_BRA",
-  "guanabara": "https://unavatar.io/twitter/viajeguanabara",
-  "cometa": "https://unavatar.io/twitter/ViacaoCometaSA",
-  "tap": "https://unavatar.io/twitter/tapairportugal",
-  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png", // O seu ecossistema mantém o link direto que já funciona
+  "azul": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Azul_Brazilian_Airlines_logo.svg/512px-Azul_Brazilian_Airlines_logo.svg.png",
+  "gol": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg/512px-GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg.png",
+  "latam": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LATAM_Airlines_logo.svg/512px-LATAM_Airlines_logo.svg.png",
+  "guanabara": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Guanabara_2023.png/320px-Logo_Guanabara_2023.png",
+  "cometa": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Viacao_cometa_logo.png",
+  "progresso": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Auto_Via%C3%A7%C3%A3o_Progresso_logo.png/320px-Auto_Via%C3%A7%C3%A3o_Progresso_logo.png",
+  "tap": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/TAP_Air_Portugal_logo.svg/512px-TAP_Air_Portugal_logo.svg.png",
+  "motriz": "https://institutomotriz.org.br/wp-content/uploads/2023/11/motriz_logo_cor.png",
 };
 
 export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, trechoEditando }: DrawerLogisticaProps) {
@@ -51,7 +52,10 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
       setLocalizador(trechoEditando.codigo_localizador || "");
       setValorPago(trechoEditando.valor_pago ? trechoEditando.valor_pago.toString() : "");
       setPagoPelaInstituicao(trechoEditando.pago_pela_instituicao || false);
-      setMostrarLinkManual(!!trechoEditando.cia_logo_url && !Object.values(DIRETORIO_LOGOS).includes(trechoEditando.cia_logo_url));
+      
+      // Abre o link manual se houver URL salva que não seja do nosso diretório automático
+      const urlSalvaÉExterna = trechoEditando.cia_logo_url && !Object.values(DIRETORIO_LOGOS).includes(trechoEditando.cia_logo_url);
+      setMostrarLinkManual(urlSalvaÉExterna);
     } else if (aberto && !trechoEditando) {
       setTipoTransporte("voo"); setOrigem(""); setDestino(""); setDataPartida(""); setDataChegada("");
       setCiaOperadora(""); setCiaLogoUrl(""); setLocalizador(""); setValorPago(""); setPagoPelaInstituicao(false);
@@ -59,8 +63,9 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
     }
   }, [aberto, trechoEditando]);
 
+  // Inteligência Local de Busca (Rápida e sem APIs instáveis)
   useEffect(() => {
-    if (ciaOperadora && !mostrarLinkManual) {
+    if (!mostrarLinkManual) {
       const termo = ciaOperadora.toLowerCase().trim();
       let encontrou = false;
       
@@ -72,7 +77,8 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
         }
       }
       
-      if (!encontrou && !trechoEditando?.cia_logo_url) {
+      // Se não achou no diretório e não é edição com URL customizada, limpa para mostrar o ícone padrão (Avião/Ônibus)
+      if (!encontrou && (!trechoEditando || trechoEditando.cia_operadora !== ciaOperadora)) {
         setCiaLogoUrl("");
       }
     }
@@ -199,7 +205,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
                   <Sparkles size={12} className={ciaLogoUrl && !mostrarLinkManual ? "animate-pulse text-amber-500" : ""} /> 
-                  {ciaLogoUrl && !mostrarLinkManual ? "Logo Capturada!" : "Auto-Logo Nativa"}
+                  {ciaLogoUrl && !mostrarLinkManual ? "Logo Encontrada" : "Auto-Logo Nativa"}
                 </h4>
                 <button type="button" onClick={() => setMostrarLinkManual(!mostrarLinkManual)} className="text-[10px] text-stone-400 hover:text-indigo-600 underline">
                   Inserir link manual
@@ -214,7 +220,7 @@ export default function DrawerLogistica({ aberto, fechar, aoSalvar, viagemId, tr
                       value={ciaOperadora} 
                       onChange={(e) => setCiaOperadora(e.target.value)} 
                       type="text" 
-                      placeholder="Ex: Azul ou Latam" 
+                      placeholder="Ex: Azul ou Cometa" 
                       className="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl pl-3 pr-10 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm shadow-sm" 
                     />
                     {ciaLogoUrl && (

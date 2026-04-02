@@ -87,17 +87,18 @@ export default function ViagensPage() {
     setDrawerLogisticaAberto(true);
   };
 
-  // 🧠 Agora a tela também lê os avatares via Unavatar.io
+  // 🧠 Sincronizado com o Cofre Blindado (Falha Zero)
   const obterLogoSegura = (nomeCia: string, urlSalva?: string) => {
     if (urlSalva) return urlSalva; 
     if (!nomeCia) return null;
     
     const nome = nomeCia.toLowerCase();
-    if (nome.includes('azul')) return 'https://unavatar.io/voeazul.com.br';
-    if (nome.includes('gol')) return 'https://unavatar.io/voegol.com.br';
-    if (nome.includes('latam')) return 'https://unavatar.io/latamairlines.com';
-    if (nome.includes('guanabara')) return 'https://unavatar.io/viajeguanabara.com.br';
-    if (nome.includes('cometa')) return 'https://unavatar.io/viacaocometa.com.br';
+    if (nome.includes('azul')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Azul_Brazilian_Airlines_logo.svg/512px-Azul_Brazilian_Airlines_logo.svg.png';
+    if (nome.includes('gol')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg/512px-GOL_Linhas_A%C3%A9reas_Inteligentes_logo.svg.png';
+    if (nome.includes('latam')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LATAM_Airlines_logo.svg/512px-LATAM_Airlines_logo.svg.png';
+    if (nome.includes('guanabara')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Logo_Guanabara_2023.png/320px-Logo_Guanabara_2023.png';
+    if (nome.includes('cometa')) return 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Viacao_cometa_logo.png';
+    if (nome.includes('progresso')) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Auto_Via%C3%A7%C3%A3o_Progresso_logo.png/320px-Auto_Via%C3%A7%C3%A3o_Progresso_logo.png';
     
     return null; 
   };
@@ -214,6 +215,7 @@ export default function ViagensPage() {
                   ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {viagem.trechos_logistica.map((trecho: any) => {
+                        // O Fallback Automático atua aqui
                         const logoDefinitiva = obterLogoSegura(trecho.cia_operadora, trecho.cia_logo_url);
                         
                         return (
@@ -227,6 +229,7 @@ export default function ViagensPage() {
                               <div className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-stone-50/50 dark:bg-stone-950/50 border-b border-l border-stone-200 dark:border-stone-800 z-10"></div>
                               <div className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full bg-stone-50/50 dark:bg-stone-950/50 border-t border-l border-stone-200 dark:border-stone-800 z-10"></div>
                               
+                              {/* Lógica Segura de Logo vs Ícone Padrão */}
                               {logoDefinitiva ? (
                                 <div className="w-12 h-12 rounded-full mb-2 shadow-sm border border-stone-200 dark:border-stone-700 overflow-hidden flex items-center justify-center bg-white relative z-0">
                                   <img src={logoDefinitiva} alt={trecho.cia_operadora} className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500" />
