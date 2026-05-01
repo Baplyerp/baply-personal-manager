@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowUpRight, ArrowDownRight, Sparkles, BrainCircuit, Target, Loader2, X, Info, Receipt } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Sparkles, BrainCircuit, Target, Loader2, X, Info } from "lucide-react";
 import BotaoWhatsApp from "@/components/BotaoWhatsApp";
 import { supabase } from "@/lib/supabase";
 import { usePerfil } from "@/contexts/PerfilContext";
@@ -28,7 +28,6 @@ export default function DashboardPage() {
           const hoje = new Date();
           const diaAtual = hoje.getDate(); 
 
-          // 🧠 Lógica Fixada: Cria um array com todos os contratos, calcula a distância e ordena.
           const filaOrdenada = contratos.map(contrato => {
             const valorParcela = contrato.valor_total / (contrato.quantidade_parcelas || 1);
             somaParcelas += valorParcela;
@@ -44,7 +43,7 @@ export default function DashboardPage() {
 
           setListaContratos(filaOrdenada);
           setTotalComprometidoMes(somaParcelas);
-          setProximoVencimento(filaOrdenada[0]); // O primeiro da fila é o mais urgente
+          setProximoVencimento(filaOrdenada[0]);
         } else {
           setListaContratos([]);
           setTotalComprometidoMes(0);
@@ -66,6 +65,9 @@ export default function DashboardPage() {
   const corStatus = percentualComprometido > 50 ? "text-red-500" : percentualComprometido > 30 ? "text-amber-500" : "text-emerald-500";
   const glowStatus = percentualComprometido > 50 ? "hover:shadow-red-500/20" : percentualComprometido > 30 ? "hover:shadow-amber-500/20" : "hover:shadow-emerald-500/20";
   const corBarra = percentualComprometido > 50 ? "bg-red-500" : percentualComprometido > 30 ? "bg-amber-500" : "bg-emerald-500";
+  
+  // Lógica de texto da IA baseada na saúde financeira
+  const saudeTexto = percentualComprometido > 50 ? "em nível de alerta" : percentualComprometido > 30 ? "moderada" : "saudável";
 
   if (carregandoPerfil || carregandoDados) {
     return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-[#A67B5B]" size={40} /></div>;
@@ -83,7 +85,7 @@ export default function DashboardPage() {
             </h2>
             <p className="text-stone-500 dark:text-stone-400 mt-2 flex items-center gap-2">
               <Sparkles size={16} className="text-[#A67B5B] animate-pulse" />
-              Olá, {perfil?.nome?.split(' ')[0] || 'Gestor'}. Aqui está o resumo das suas operações.
+              Seu assistente pessoal de transição.
             </p>
           </div>
           <div><BotaoWhatsApp /></div>
@@ -110,13 +112,12 @@ export default function DashboardPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-stone-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Comprometido / Mês</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Comprometido</h3>
                 <div className="h-12 w-12 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-600 dark:text-stone-400 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6"><ArrowDownRight size={24} /></div>
               </div>
               <div className="mt-6 flex items-end justify-between">
                 <div>
                   <span className={`text-4xl font-black ${corStatus}`}>{percentualComprometido.toFixed(0)}%</span>
-                  <p className="text-sm text-stone-400 mt-2 font-medium truncate max-w-[120px]">R$ {totalComprometidoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em acordos</p>
                 </div>
                 <Info size={16} className="text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
@@ -136,8 +137,8 @@ export default function DashboardPage() {
                   <>
                     <span className="text-4xl font-black text-white">R$ {proximoVencimento.valorParcela.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     <p className="text-sm text-stone-200 mt-2 font-medium flex justify-between items-center">
-                      <span className="truncate pr-2">{proximoVencimento.titulo}</span>
-                      <span className="bg-white/20 px-2.5 py-1 rounded-md shrink-0">{proximoVencimento.diasFaltantes === 0 ? "É Hoje!" : proximoVencimento.diasFaltantes === 1 ? "Amanhã" : `Em ${proximoVencimento.diasFaltantes} dias`}</span>
+                      <span className="truncate pr-2">{proximoVencimento.titulo} ({proximoVencimento.parceiros?.nome})</span>
+                      <span className="bg-white/20 px-2 py-0.5 rounded-md shrink-0">{proximoVencimento.diasFaltantes === 0 ? "É Hoje!" : proximoVencimento.diasFaltantes === 1 ? "Amanhã" : `Em ${proximoVencimento.diasFaltantes} dias`}</span>
                     </p>
                   </>
                 ) : (
@@ -152,19 +153,28 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Painel da IA */}
+        {/* 🧠 Painel da IA - Reflexão Financeira Restaurada */}
         <div className="relative p-8 rounded-3xl bg-stone-900 dark:bg-stone-100 border border-stone-800 dark:border-stone-200 overflow-hidden group hover:shadow-[0_0_50px_rgba(255,255,255,0.1)] transition-all duration-700">
-          <div className="absolute top-0 right-0 p-8 opacity-10 transition-transform duration-700 group-hover:scale-150 group-hover:rotate-12"><BrainCircuit size={120} className="text-white dark:text-stone-900" /></div>
+          <div className="absolute top-0 right-0 p-8 opacity-10 transition-transform duration-700 group-hover:scale-150 group-hover:rotate-12">
+            <BrainCircuit size={120} className="text-white dark:text-stone-900" />
+          </div>
+          
           <div className="relative z-10 md:w-2/3">
             <div className="flex items-center gap-3 mb-4">
-              <span className="flex h-3 w-3 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A67B5B] opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-[#A67B5B]"></span></span>
-              <h3 className="text-lg font-bold text-stone-100 dark:text-stone-900 uppercase tracking-widest">Análise Pessoal Ativa</h3>
+              <span className="flex h-3 w-3 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A67B5B] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#A67B5B]"></span>
+              </span>
+              <h3 className="text-lg font-bold text-stone-100 dark:text-stone-900 uppercase tracking-widest">
+                Análise Pessoal Ativa
+              </h3>
             </div>
             <p className="text-stone-300 dark:text-stone-700 text-lg leading-relaxed">
-              "Analisando sua renda de <strong className="text-white dark:text-stone-900">R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>, sua taxa de comprometimento mensal está em <strong className={percentualComprometido > 50 ? 'text-red-400' : 'text-emerald-400'}>{percentualComprometido.toFixed(0)}%</strong>. 
-              {proximoVencimento ? ` A prioridade máxima agora é liquidar '${proximoVencimento.parceiros?.nome}' no dia ${proximoVencimento.dia_vencimento}.` : ' Você não possui vencimentos iminentes no radar.'} 
-              Deseja simular o cenário do próximo mês?"
+              "Analisando sua renda de <strong className="text-white dark:text-stone-900">R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>, sua taxa de comprometimento atual é {saudeTexto} ({percentualComprometido.toFixed(0)}%). No entanto, como você está em fase de mudança, recomendo criar uma reserva de segurança antes de antecipar o pagamento de {proximoVencimento ? `credor(a) ${proximoVencimento.parceiros?.nome}` : 'seus credores'}. Deseja que eu simule uma proposta de renegociação de prazos?"
             </p>
+            <button className="mt-6 px-6 py-3 bg-white/10 dark:bg-stone-900/10 hover:bg-white/20 dark:hover:bg-stone-900/20 backdrop-blur-md rounded-xl text-stone-100 dark:text-stone-900 font-bold transition-all hover:scale-105 active:scale-95">
+              Simular Cenários
+            </button>
           </div>
         </div>
 
