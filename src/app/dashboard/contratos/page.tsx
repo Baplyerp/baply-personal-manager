@@ -14,8 +14,6 @@ export default function ContratosPage() {
   
   const [drawerTransacaoAberto, setDrawerTransacaoAberto] = useState(false);
   const [contratoSelecionado, setContratoSelecionado] = useState<any>(null);
-  
-  // Estado para Edição
   const [contratoEditando, setContratoEditando] = useState<any>(null);
 
   const buscarContratos = async () => {
@@ -40,9 +38,24 @@ export default function ContratosPage() {
   };
 
   const abrirEdicao = (contrato: any, e: React.MouseEvent) => {
-    e.stopPropagation(); // Evita clicar em botões que estejam atrás
+    e.stopPropagation();
     setContratoEditando(contrato);
     setDrawerAberto(true);
+  };
+
+  // 🧠 Algoritmo de Ajuste Financeiro (Fintech Math)
+  const formatarParcelas = (total: number, qtd: number) => {
+    if (qtd <= 1) return `1x de R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    
+    const base = Math.floor((total / qtd) * 100) / 100;
+    const diferenca = total - (base * qtd);
+    
+    if (diferenca > 0.001) { // Proteção contra lixo de ponto flutuante
+      const primeira = base + diferenca;
+      return `1x R$ ${primeira.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} + ${qtd - 1}x R$ ${base.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    
+    return `${qtd}x de R$ ${base.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   return (
@@ -76,7 +89,6 @@ export default function ContratosPage() {
           {contratos.map((contrato) => (
             <div key={contrato.id} className="group relative p-6 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-xl hover:border-[#A67B5B]/50 transition-all duration-300">
               
-              {/* Botão de Editar escondido que aparece no Hover */}
               <button onClick={(e) => abrirEdicao(contrato, e)} className="absolute top-4 right-4 p-2 bg-stone-50 hover:bg-amber-100 dark:bg-stone-800 dark:hover:bg-amber-900/30 text-stone-400 hover:text-amber-600 dark:hover:text-amber-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-sm z-10" title="Editar Acordo">
                 <Edit2 size={16} />
               </button>
@@ -90,14 +102,17 @@ export default function ContratosPage() {
 
               <div className="py-4 border-t border-stone-100 dark:border-stone-800">
                 <p className="text-3xl font-black text-stone-900 dark:text-stone-50">
-                  R$ {contrato.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {contrato.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
 
               <div className="space-y-3 pt-2 text-sm text-stone-600 dark:text-stone-400">
                 <div className="flex justify-between items-center bg-stone-50 dark:bg-stone-950 p-2.5 rounded-lg">
                   <span className="flex items-center gap-2"><Wallet size={16}/> Parcelamento</span>
-                  <span className="font-bold text-stone-900 dark:text-stone-100">{contrato.quantidade_parcelas}x (R$ {(contrato.valor_total / contrato.quantidade_parcelas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</span>
+                  {/* 👇 Chamando a Inteligência Matemática aqui */}
+                  <span className="font-bold text-stone-900 dark:text-stone-100">
+                    {formatarParcelas(contrato.valor_total, contrato.quantidade_parcelas)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center bg-stone-50 dark:bg-stone-950 p-2.5 rounded-lg">
                   <span className="flex items-center gap-2"><CalendarDays size={16}/> Vencimento</span>

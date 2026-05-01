@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 type DrawerProps = {
   aberto: boolean;
   fechar: () => void;
-  contrato: any; // Recebe o contrato selecionado e os dados do parceiro
+  contrato: any; 
 };
 
 export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerProps) {
@@ -17,18 +17,15 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
   const [salvando, setSalvando] = useState(false);
   const [enviandoWhats, setEnviandoWhats] = useState<string | null>(null);
 
-  // Estados do formulário de nova baixa
   const [mostrarForm, setMostrarForm] = useState(false);
   const [valorPago, setValorPago] = useState("");
   const [dataPagamento, setDataPagamento] = useState(new Date().toISOString().split('T')[0]);
-  const [linkComprovante, setLinkComprovante] = useState(""); // Futuramente, faremos upload de arquivo aqui!
+  const [linkComprovante, setLinkComprovante] = useState(""); 
 
   useEffect(() => {
     if (aberto && contrato) {
       document.body.style.overflow = "hidden";
       buscarTransacoes();
-      // Sugere o valor da parcela automaticamente
-      setValorPago((contrato.valor_total / contrato.quantidade_parcelas).toFixed(2));
     } else {
       document.body.style.overflow = "unset";
       setMostrarForm(false);
@@ -44,7 +41,22 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
       .eq("contrato_id", contrato.id)
       .order("data_pagamento", { ascending: false });
     
-    if (data) setTransacoes(data);
+    if (data) {
+      setTransacoes(data);
+      
+      // 🧠 Fintech Math Automático no Input
+      const qtd = contrato.quantidade_parcelas || 1;
+      const base = Math.floor((contrato.valor_total / qtd) * 100) / 100;
+      const diferenca = contrato.valor_total - (base * qtd);
+      
+      // Se não houver transações gravadas ainda, esta é a primeira! (Leva o ajuste de centavos)
+      if (data.length === 0) {
+        setValorPago((base + diferenca).toFixed(2));
+      } else {
+        // Se for a segunda, terceira, etc, leva o valor base cravado.
+        setValorPago(base.toFixed(2));
+      }
+    }
     setCarregando(false);
   };
 
@@ -58,7 +70,7 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
         contrato_id: contrato.id,
         valor_pago: parseFloat(valorPago),
         data_pagamento: dataPagamento,
-        comprovante_url: linkComprovante || "https://baply.com/recibo-padrao", // Mock se vazio
+        comprovante_url: linkComprovante || "https://baply.com/recibo-padrao",
         status_whatsapp: "nao_enviado"
       }]);
 
@@ -67,7 +79,7 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
       toast.success("Pagamento registrado com sucesso! 💸", { id: toastId });
       setMostrarForm(false);
       setLinkComprovante("");
-      buscarTransacoes(); // Recarrega a lista
+      buscarTransacoes(); 
     } catch (error: any) {
       toast.error(`Erro: ${error.message}`, { id: toastId });
     } finally {
@@ -80,14 +92,13 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
     const toastId = toast.loading("Enviando comprovante para o parceiro...");
 
     try {
-      // Chama a nossa API interna que criamos anteriormente
       const response = await fetch("/api/whatsapp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           telefone: contrato.parceiros.telefone,
           nome: contrato.parceiros.nome,
-          valor: transacao.valor_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+          valor: transacao.valor_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
           descricao: contrato.titulo,
           linkComprovante: transacao.comprovante_url
         }),
@@ -96,7 +107,6 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
       const data = await response.json();
 
       if (data.success) {
-        // Atualiza o status no banco para 'enviado'
         await supabase.from("transacoes").update({ status_whatsapp: "enviado" }).eq("id", transacao.id);
         toast.success("Comprovante enviado para o WhatsApp! 🚀", { id: toastId });
         buscarTransacoes();
@@ -118,7 +128,6 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
 
       <div className={`fixed top-0 right-0 h-full w-full max-w-lg bg-stone-50 dark:bg-stone-950 border-l border-stone-200 dark:border-stone-800 shadow-2xl z-50 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${aberto ? "translate-x-0" : "translate-x-full"}`}>
         
-        {/* Cabeçalho */}
         <div className="flex items-center justify-between p-6 bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800">
           <div>
             <h2 className="text-xl font-bold text-stone-900 dark:text-stone-50 flex items-center gap-2">
@@ -131,10 +140,8 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
           <button onClick={fechar} className="p-2 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:text-stone-200 dark:hover:bg-stone-800 transition-colors"><X size={24} /></button>
         </div>
 
-        {/* Conteúdo Central */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
-          {/* Botão de Adicionar Nova Baixa */}
           {!mostrarForm ? (
             <button onClick={() => setMostrarForm(true)} className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-2xl text-stone-500 dark:text-stone-400 hover:text-[#A67B5B] hover:border-[#A67B5B] hover:bg-[#A67B5B]/5 transition-all font-bold">
               <PlusCircle size={20} /> Registrar Novo Pagamento
@@ -165,7 +172,6 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
             </form>
           )}
 
-          {/* Lista de Histórico */}
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-stone-400 uppercase tracking-wider">Histórico de Baixas</h3>
             {carregando ? (
@@ -176,13 +182,12 @@ export default function DrawerTransacoes({ aberto, fechar, contrato }: DrawerPro
               transacoes.map((t) => (
                 <div key={t.id} className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 shadow-sm flex items-center justify-between group hover:border-[#A67B5B]/30 transition-colors">
                   <div>
-                    <p className="font-bold text-stone-900 dark:text-stone-100 text-lg">R$ {parseFloat(t.valor_pago).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <p className="font-bold text-stone-900 dark:text-stone-100 text-lg">R$ {parseFloat(t.valor_pago).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                     <p className="text-xs text-stone-500 mt-0.5 flex items-center gap-1">
                       <Calendar size={12} /> {new Date(t.data_pagamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                     </p>
                   </div>
                   
-                  {/* Botão do WhatsApp Integrado */}
                   <button 
                     onClick={() => dispararWhatsApp(t)}
                     disabled={enviandoWhats === t.id || t.status_whatsapp === 'enviado'}

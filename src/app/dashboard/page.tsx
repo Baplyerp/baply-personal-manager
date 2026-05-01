@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowUpRight, ArrowDownRight, Sparkles, BrainCircuit, Target, Loader2, X, Info } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Sparkles, BrainCircuit, Target, Loader2, X, Info, CreditCard, Repeat, TrendingUp, Plane } from "lucide-react";
 import BotaoWhatsApp from "@/components/BotaoWhatsApp";
 import { supabase } from "@/lib/supabase";
 import { usePerfil } from "@/contexts/PerfilContext";
@@ -14,8 +14,14 @@ export default function DashboardPage() {
   const [totalComprometidoMes, setTotalComprometidoMes] = useState(0);
   const [proximoVencimento, setProximoVencimento] = useState<any>(null);
 
-  // Controle dos Modais "Raio-X"
   const [modalAberto, setModalAberto] = useState<"comprometido" | "vencimentos" | null>(null);
+
+  // Estados Simulados para os Novos Módulos (Serão conectados ao DB no futuro)
+  const faturasCartao = 1250.00;
+  const totalAssinaturas = 189.90;
+  const metaReserva = 10000;
+  const reservaAtual = 3500;
+  const progressoReserva = (reservaAtual / metaReserva) * 100;
 
   useEffect(() => {
     const buscarDadosGlobais = async () => {
@@ -29,16 +35,17 @@ export default function DashboardPage() {
           const diaAtual = hoje.getDate(); 
 
           const filaOrdenada = contratos.map(contrato => {
-            const valorParcela = contrato.valor_total / (contrato.quantidade_parcelas || 1);
-            somaParcelas += valorParcela;
+            const qtd = contrato.quantidade_parcelas || 1;
+            const valorBase = Math.floor((contrato.valor_total / qtd) * 100) / 100;
+            
+            somaParcelas += valorBase;
 
             const diaVenc = contrato.dia_vencimento;
             const distancia = diaVenc >= diaAtual ? (diaVenc - diaAtual) : ((30 - diaAtual) + diaVenc);
             
-            return { ...contrato, diasFaltantes: distancia, valorParcela };
+            return { ...contrato, diasFaltantes: distancia, valorParcela: valorBase };
           });
 
-          // Ordena do mais próximo a vencer para o mais distante
           filaOrdenada.sort((a, b) => a.diasFaltantes - b.diasFaltantes);
 
           setListaContratos(filaOrdenada);
@@ -66,8 +73,7 @@ export default function DashboardPage() {
   const glowStatus = percentualComprometido > 50 ? "hover:shadow-red-500/20" : percentualComprometido > 30 ? "hover:shadow-amber-500/20" : "hover:shadow-emerald-500/20";
   const corBarra = percentualComprometido > 50 ? "bg-red-500" : percentualComprometido > 30 ? "bg-amber-500" : "bg-emerald-500";
   
-  // Lógica de texto da IA baseada na saúde financeira
-  const saudeTexto = percentualComprometido > 50 ? "em nível de alerta" : percentualComprometido > 30 ? "moderada" : "saudável";
+  const saudeTexto = percentualComprometido > 50 ? "em nível de alerta" : percentualComprometido > 30 ? "saudável" : "excelente";
 
   if (carregandoPerfil || carregandoDados) {
     return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-[#A67B5B]" size={40} /></div>;
@@ -91,7 +97,7 @@ export default function DashboardPage() {
           <div><BotaoWhatsApp /></div>
         </div>
 
-        {/* Grid Principal de Cards com Cliques para Raio-X */}
+        {/* 🌟 LINHA 1: Visão Orçamentária Principal */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           <div className="group relative p-6 rounded-3xl bg-white/50 dark:bg-stone-900/50 backdrop-blur-xl border border-stone-200 dark:border-stone-800 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden cursor-default">
@@ -102,7 +108,7 @@ export default function DashboardPage() {
                 <div className="h-12 w-12 rounded-2xl bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"><ArrowUpRight size={24} /></div>
               </div>
               <div className="mt-6">
-                <span className="text-4xl font-black text-stone-900 dark:text-stone-50">R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                <span className="text-4xl font-black text-stone-900 dark:text-stone-50">R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 <p className="text-sm text-stone-400 mt-2 font-medium">Previsão de entrada no mês</p>
               </div>
             </div>
@@ -112,12 +118,13 @@ export default function DashboardPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-stone-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Comprometido</h3>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Acordos & Contratos</h3>
                 <div className="h-12 w-12 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-600 dark:text-stone-400 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6"><ArrowDownRight size={24} /></div>
               </div>
               <div className="mt-6 flex items-end justify-between">
                 <div>
                   <span className={`text-4xl font-black ${corStatus}`}>{percentualComprometido.toFixed(0)}%</span>
+                  <p className="text-xs font-bold text-stone-400 mt-1 uppercase tracking-wider">Comprometido</p>
                 </div>
                 <Info size={16} className="text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
@@ -135,7 +142,12 @@ export default function DashboardPage() {
               <div className="mt-6 relative">
                 {proximoVencimento ? (
                   <>
-                    <span className="text-4xl font-black text-white">R$ {proximoVencimento.valorParcela.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-black text-white">R$ {proximoVencimento.valorParcela.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      {proximoVencimento.quantidade_parcelas > 1 && (
+                        <span className="text-xs text-white/70 font-medium pb-1">/ R$ {proximoVencimento.valor_total.toLocaleString('pt-BR', {minimumFractionDigits:0})} total</span>
+                      )}
+                    </div>
                     <p className="text-sm text-stone-200 mt-2 font-medium flex justify-between items-center">
                       <span className="truncate pr-2">{proximoVencimento.titulo} ({proximoVencimento.parceiros?.nome})</span>
                       <span className="bg-white/20 px-2 py-0.5 rounded-md shrink-0">{proximoVencimento.diasFaltantes === 0 ? "É Hoje!" : proximoVencimento.diasFaltantes === 1 ? "Amanhã" : `Em ${proximoVencimento.diasFaltantes} dias`}</span>
@@ -153,7 +165,54 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 🧠 Painel da IA - Reflexão Financeira Restaurada */}
+        {/* 🌟 LINHA 2: Os Novos Módulos do Ecossistema */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <div className="group relative p-6 rounded-3xl bg-white/50 dark:bg-stone-900/50 backdrop-blur-xl border border-stone-200 dark:border-stone-800 transition-all duration-500 hover:-translate-y-1 hover:border-indigo-300 dark:hover:border-indigo-700 cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
+                <CreditCard size={18} className="group-hover:text-indigo-500 transition-colors"/> 
+                <h3 className="text-sm font-bold uppercase tracking-wider">Cartões & Faturas</h3>
+              </div>
+            </div>
+            <span className="text-2xl font-black text-stone-800 dark:text-stone-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              R$ {faturasCartao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+            </span>
+            <p className="text-xs text-stone-400 mt-1 font-medium">Faturas abertas neste mês</p>
+          </div>
+
+          <div className="group relative p-6 rounded-3xl bg-white/50 dark:bg-stone-900/50 backdrop-blur-xl border border-stone-200 dark:border-stone-800 transition-all duration-500 hover:-translate-y-1 hover:border-rose-300 dark:hover:border-rose-700 cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
+                <Repeat size={18} className="group-hover:text-rose-500 transition-colors"/> 
+                <h3 className="text-sm font-bold uppercase tracking-wider">Assinaturas</h3>
+              </div>
+            </div>
+            <span className="text-2xl font-black text-stone-800 dark:text-stone-100 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+              R$ {totalAssinaturas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+            </span>
+            <p className="text-xs text-stone-400 mt-1 font-medium">Netflix, Spotify, Internet...</p>
+          </div>
+
+          <div className="group relative p-6 rounded-3xl bg-white/50 dark:bg-stone-900/50 backdrop-blur-xl border border-stone-200 dark:border-stone-800 transition-all duration-500 hover:-translate-y-1 hover:border-emerald-300 dark:hover:border-emerald-700 cursor-default">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
+                <TrendingUp size={18} className="group-hover:text-emerald-500 transition-colors"/> 
+                <h3 className="text-sm font-bold uppercase tracking-wider">Patrimônio & Metas</h3>
+              </div>
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md">{progressoReserva.toFixed(0)}%</span>
+            </div>
+            <span className="text-2xl font-black text-stone-800 dark:text-stone-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+              R$ {reservaAtual.toLocaleString('pt-BR')} <span className="text-sm text-stone-400">/ {metaReserva.toLocaleString('pt-BR')}</span>
+            </span>
+            <div className="w-full bg-stone-200 dark:bg-stone-800 rounded-full h-1.5 mt-3 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-emerald-500 transition-all duration-1000" style={{ width: `${progressoReserva}%` }}></div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* 🧠 Painel da IA - A Alma do Sistema Restaurada */}
         <div className="relative p-8 rounded-3xl bg-stone-900 dark:bg-stone-100 border border-stone-800 dark:border-stone-200 overflow-hidden group hover:shadow-[0_0_50px_rgba(255,255,255,0.1)] transition-all duration-700">
           <div className="absolute top-0 right-0 p-8 opacity-10 transition-transform duration-700 group-hover:scale-150 group-hover:rotate-12">
             <BrainCircuit size={120} className="text-white dark:text-stone-900" />
@@ -169,9 +228,12 @@ export default function DashboardPage() {
                 Análise Pessoal Ativa
               </h3>
             </div>
+            
+            {/* O TEXTO RICO E NARRATIVO */}
             <p className="text-stone-300 dark:text-stone-700 text-lg leading-relaxed">
-              "Analisando sua renda de <strong className="text-white dark:text-stone-900">R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>, sua taxa de comprometimento atual é {saudeTexto} ({percentualComprometido.toFixed(0)}%). No entanto, como você está em fase de mudança, recomendo criar uma reserva de segurança antes de antecipar o pagamento de {proximoVencimento ? `credor(a) ${proximoVencimento.parceiros?.nome}` : 'seus credores'}. Deseja que eu simule uma proposta de renegociação de prazos?"
+              "Analisando sua renda de <strong className="text-white dark:text-stone-900">R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>, sua taxa de comprometimento atual é {saudeTexto} ({percentualComprometido.toFixed(0)}%). No entanto, como você está em fase de mudança, recomendo criar uma reserva de segurança forte antes de antecipar o pagamento de {proximoVencimento ? `credor(a) ${proximoVencimento.parceiros?.nome}` : 'seus credores'}. Deseja que eu simule uma proposta de renegociação para o seu aluguel ou dívidas?"
             </p>
+            
             <button className="mt-6 px-6 py-3 bg-white/10 dark:bg-stone-900/10 hover:bg-white/20 dark:hover:bg-stone-900/20 backdrop-blur-md rounded-xl text-stone-100 dark:text-stone-900 font-bold transition-all hover:scale-105 active:scale-95">
               Simular Cenários
             </button>
@@ -209,11 +271,11 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <p className="font-bold text-stone-800 dark:text-stone-100 text-sm truncate max-w-[150px]">{c.titulo}</p>
-                        <p className="text-xs text-stone-500">Todo dia {c.dia_vencimento}</p>
+                        <p className="text-xs text-stone-500">Todo dia {c.dia_vencimento} • {c.quantidade_parcelas}x parcelas</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-black text-[#A67B5B]">R$ {c.valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                      <p className="font-black text-[#A67B5B]">R$ {c.valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                       <p className="text-[10px] uppercase font-bold text-stone-400 mt-0.5">{c.diasFaltantes} dias restantes</p>
                     </div>
                   </div>
@@ -223,14 +285,13 @@ export default function DashboardPage() {
 
             {modalAberto === "comprometido" && (
               <div className="mt-4 pt-4 border-t border-stone-100 dark:border-stone-800 flex justify-between items-center">
-                <span className="text-sm font-bold text-stone-500">Soma Total / Mês</span>
-                <span className="text-xl font-black text-stone-900 dark:text-white">R$ {totalComprometidoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                <span className="text-sm font-bold text-stone-500">Soma Total das Parcelas / Mês</span>
+                <span className="text-xl font-black text-stone-900 dark:text-white">R$ {totalComprometidoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </div>
             )}
           </div>
         </div>
       )}
-
     </>
   );
 }
