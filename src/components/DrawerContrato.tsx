@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, FileSignature, DollarSign, Calendar, AlignLeft, User, Save, Loader2 } from "lucide-react";
+import { X, FileSignature, DollarSign, Calendar, AlignLeft, User, Save, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
@@ -9,9 +9,10 @@ type DrawerProps = {
   aberto: boolean;
   fechar: () => void;
   aoSalvar: () => void;
+  contratoEditando?: any; // 👈 A inteligência de edição entra aqui
 };
 
-export default function DrawerContrato({ aberto, fechar, aoSalvar }: DrawerProps) {
+export default function DrawerContrato({ aberto, fechar, aoSalvar, contratoEditando }: DrawerProps) {
   const [salvando, setSalvando] = useState(false);
   const [parceiros, setParceiros] = useState<any[]>([]);
   
@@ -27,43 +28,58 @@ export default function DrawerContrato({ aberto, fechar, aoSalvar }: DrawerProps
     if (aberto) {
       document.body.style.overflow = "hidden";
       buscarParceiros();
+      
+      // 🧠 Preenche os dados se for Modo de Edição
+      if (contratoEditando) {
+        setParceiroId(contratoEditando.parceiro_id || "");
+        setTitulo(contratoEditando.titulo || "");
+        setDescricao(contratoEditando.descricao || "");
+        setValorTotal(contratoEditando.valor_total ? contratoEditando.valor_total.toString() : "");
+        setParcelas(contratoEditando.quantidade_parcelas ? contratoEditando.quantidade_parcelas.toString() : "1");
+        setDiaVencimento(contratoEditando.dia_vencimento ? contratoEditando.dia_vencimento.toString() : "10");
+      } else {
+        // Limpa se for novo
+        setTitulo(""); setDescricao(""); setValorTotal(""); setParcelas("1"); setDiaVencimento("10");
+      }
     } else {
       document.body.style.overflow = "unset";
     }
     return () => { document.body.style.overflow = "unset"; };
-  }, [aberto]);
+  }, [aberto, contratoEditando]);
 
-  // Busca quem está cadastrado no CRM para podermos atrelar o contrato
   const buscarParceiros = async () => {
     const { data } = await supabase.from("parceiros").select("id, nome").order("nome");
     if (data) {
       setParceiros(data);
-      if (data.length > 0 && !parceiroId) setParceiroId(data[0].id);
+      if (data.length > 0 && !parceiroId && !contratoEditando) setParceiroId(data[0].id);
     }
   };
 
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
     setSalvando(true);
-    const toastId = toast.loading("Registrando contrato...");
+    const toastId = toast.loading(contratoEditando ? "Atualizando acordo..." : "Registrando contrato...");
+
+    const dados = {
+      parceiro_id: parceiroId,
+      titulo,
+      descricao,
+      valor_total: parseFloat(valorTotal.replace(",", ".")),
+      quantidade_parcelas: parseInt(parcelas),
+      dia_vencimento: parseInt(diaVencimento),
+      status: "ativo"
+    };
 
     try {
-      const { error } = await supabase.from("contratos").insert([{
-        parceiro_id: parceiroId,
-        titulo,
-        descricao,
-        valor_total: parseFloat(valorTotal.replace(",", ".")),
-        quantidade_parcelas: parseInt(parcelas),
-        dia_vencimento: parseInt(diaVencimento),
-        status: "ativo"
-      }]);
-
-      if (error) throw error;
-
-      toast.success("Contrato/Acordo firmado com sucesso! 🤝", { id: toastId });
-      
-      // Limpa formulário
-      setTitulo(""); setDescricao(""); setValorTotal(""); setParcelas("1"); setDiaVencimento("10");
+      if (contratoEditando) {
+        const { error } = await supabase.from("contratos").update(dados).eq("id", contratoEditando.id);
+        if (error) throw error;
+        toast.success("Acordo atualizado com sucesso! 🔄", { id: toastId });
+      } else {
+        const { error } = await supabase.from("contratos").insert([dados]);
+        if (error) throw error;
+        toast.success("Contrato/Acordo firmado com sucesso! 🤝", { id: toastId });
+      }
       
       aoSalvar();
       fechar();
@@ -81,9 +97,14 @@ export default function DrawerContrato({ aberto, fechar, aoSalvar }: DrawerProps
       <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-stone-950 border-l border-stone-200 dark:border-stone-800 shadow-2xl z-50 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${aberto ? "translate-x-0" : "translate-x-full"}`}>
         
         <div className="flex items-center justify-between p-6 border-b border-stone-100 dark:border-stone-900">
-          <div>
-            <h2 className="text-xl font-bold text-stone-900 dark:text-stone-50">Novo Acordo</h2>
-            <p className="text-sm text-stone-500 dark:text-stone-400">Registre dívidas, aluguéis ou contratos.</p>
+          <div className="flex items-center gap-3">
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${contratoEditando ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-[#A67B5B]/10 text-[#A67B5B]'}`}>
+              {contratoEditando ? <RefreshCw size={20} /> : <FileSignature size={20} />}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-stone-900 dark:text-stone-50">{contratoEditando ? "Editar Acordo" : "Novo Acordo"}</h2>
+              <p className="text-sm text-stone-500 dark:text-stone-400">Gerencie os termos da dívida/aluguel.</p>
+            </div>
           </div>
           <button onClick={fechar} className="p-2 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:text-stone-200 dark:hover:bg-stone-800 transition-colors"><X size={24} /></button>
         </div>
@@ -127,10 +148,9 @@ export default function DrawerContrato({ aberto, fechar, aoSalvar }: DrawerProps
         </form>
 
         <div className="p-6 border-t border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-950/50">
-          {/* AQUI ESTAVA O BUG! form="form-parceiro" virou form="form-contrato" */}
-          <button type="submit" form="form-contrato" disabled={salvando || parceiros.length === 0} className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-[#A67B5B] to-[#8a6347] hover:from-[#966d50] hover:to-[#785438] text-white rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(166,123,91,0.3)] hover:shadow-[0_0_30px_rgba(166,123,91,0.5)] transition-all disabled:opacity-50 hover:-translate-y-1">
-            {salvando ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />}
-            <span>{salvando ? "Sincronizando..." : "Firmar Acordo"}</span>
+          <button type="submit" form="form-contrato" disabled={salvando || parceiros.length === 0} className={`w-full flex items-center justify-center gap-2 py-4 text-white rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(166,123,91,0.3)] hover:shadow-[0_0_30px_rgba(166,123,91,0.5)] transition-all disabled:opacity-50 hover:-translate-y-1 ${contratoEditando ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600' : 'bg-gradient-to-r from-[#A67B5B] to-[#8a6347] hover:from-[#966d50] hover:to-[#785438]'}`}>
+            {salvando ? <Loader2 size={24} className="animate-spin" /> : (contratoEditando ? <RefreshCw size={24} /> : <Save size={24} />)}
+            <span>{salvando ? "Sincronizando..." : (contratoEditando ? "Atualizar Acordo" : "Firmar Acordo")}</span>
           </button>
         </div>
 

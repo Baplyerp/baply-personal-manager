@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowUpRight, ArrowDownRight, Sparkles, BrainCircuit, Target, Loader2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Sparkles, BrainCircuit, Target, Loader2, X, Info, Receipt } from "lucide-react";
 import BotaoWhatsApp from "@/components/BotaoWhatsApp";
 import { supabase } from "@/lib/supabase";
 import { usePerfil } from "@/contexts/PerfilContext";
@@ -10,46 +10,45 @@ export default function DashboardPage() {
   const { perfil, carregando: carregandoPerfil } = usePerfil();
   const [carregandoDados, setCarregandoDados] = useState(true);
   
+  const [listaContratos, setListaContratos] = useState<any[]>([]);
   const [totalComprometidoMes, setTotalComprometidoMes] = useState(0);
   const [proximoVencimento, setProximoVencimento] = useState<any>(null);
 
-  // 🧠 Motor de Visão Global
+  // Controle dos Modais "Raio-X"
+  const [modalAberto, setModalAberto] = useState<"comprometido" | "vencimentos" | null>(null);
+
   useEffect(() => {
     const buscarDadosGlobais = async () => {
       setCarregandoDados(true);
       try {
-        // Busca todos os contratos ativos e traz o nome do parceiro
-        const { data: contratos } = await supabase
-          .from("contratos")
-          .select("*, parceiros(nome)")
-          .eq("status", "ativo");
+        const { data: contratos } = await supabase.from("contratos").select("*, parceiros(nome)").eq("status", "ativo");
 
         if (contratos && contratos.length > 0) {
           let somaParcelas = 0;
-          let contratoMaisProximo: any = null;
-          let menorDistanciaEmDias = 999;
-
           const hoje = new Date();
-          const diaAtual = hoje.getDate(); // Ex: dia 15
+          const diaAtual = hoje.getDate(); 
 
-          contratos.forEach(contrato => {
-            // 1. Soma o valor da parcela mensal deste contrato
+          // 🧠 Lógica Fixada: Cria um array com todos os contratos, calcula a distância e ordena.
+          const filaOrdenada = contratos.map(contrato => {
             const valorParcela = contrato.valor_total / (contrato.quantidade_parcelas || 1);
             somaParcelas += valorParcela;
 
-            // 2. Acha quem vence primeiro
             const diaVenc = contrato.dia_vencimento;
-            // Se o vencimento é ainda este mês, a distância é a diferença. Se já passou, vence no mês que vem (+30 dias aprox)
             const distancia = diaVenc >= diaAtual ? (diaVenc - diaAtual) : ((30 - diaAtual) + diaVenc);
             
-            if (distancia < menorDistanciaEmDias) {
-              menorDistanciaEmDias = distancia;
-              contratoMaisProximo = { ...contrato, diasFaltantes: distancia };
-            }
+            return { ...contrato, diasFaltantes: distancia, valorParcela };
           });
 
+          // Ordena do mais próximo a vencer para o mais distante
+          filaOrdenada.sort((a, b) => a.diasFaltantes - b.diasFaltantes);
+
+          setListaContratos(filaOrdenada);
           setTotalComprometidoMes(somaParcelas);
-          setProximoVencimento(contratoMaisProximo);
+          setProximoVencimento(filaOrdenada[0]); // O primeiro da fila é o mais urgente
+        } else {
+          setListaContratos([]);
+          setTotalComprometidoMes(0);
+          setProximoVencimento(null);
         }
       } catch (error) {
         console.error("Erro ao puxar visão global", error);
@@ -61,11 +60,9 @@ export default function DashboardPage() {
     buscarDadosGlobais();
   }, []);
 
-  // Variáveis Finais para a UI
   const rendaMensal = perfil?.renda_mensal || 0;
   const percentualComprometido = rendaMensal > 0 ? (totalComprometidoMes / rendaMensal) * 100 : 0;
   
-  // Cores dinâmicas baseadas na saúde financeira
   const corStatus = percentualComprometido > 50 ? "text-red-500" : percentualComprometido > 30 ? "text-amber-500" : "text-emerald-500";
   const glowStatus = percentualComprometido > 50 ? "hover:shadow-red-500/20" : percentualComprometido > 30 ? "hover:shadow-amber-500/20" : "hover:shadow-emerald-500/20";
   const corBarra = percentualComprometido > 50 ? "bg-red-500" : percentualComprometido > 30 ? "bg-amber-500" : "bg-emerald-500";
@@ -75,132 +72,155 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-      
-      {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-stone-900 to-stone-500 dark:from-stone-50 dark:to-stone-400">
-            Inteligência Financeira
-          </h2>
-          <p className="text-stone-500 dark:text-stone-400 mt-2 flex items-center gap-2">
-            <Sparkles size={16} className="text-[#A67B5B] animate-pulse" />
-            Olá, {perfil?.nome?.split(' ')[0] || 'Gestor'}. Aqui está o resumo das suas operações.
-          </p>
+    <>
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 relative">
+        
+        {/* Cabeçalho */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-stone-900 to-stone-500 dark:from-stone-50 dark:to-stone-400">
+              Inteligência Financeira
+            </h2>
+            <p className="text-stone-500 dark:text-stone-400 mt-2 flex items-center gap-2">
+              <Sparkles size={16} className="text-[#A67B5B] animate-pulse" />
+              Olá, {perfil?.nome?.split(' ')[0] || 'Gestor'}. Aqui está o resumo das suas operações.
+            </p>
+          </div>
+          <div><BotaoWhatsApp /></div>
         </div>
-        <div><BotaoWhatsApp /></div>
+
+        {/* Grid Principal de Cards com Cliques para Raio-X */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <div className="group relative p-6 rounded-3xl bg-white/50 dark:bg-stone-900/50 backdrop-blur-xl border border-stone-200 dark:border-stone-800 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden cursor-default">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Renda Base</h3>
+                <div className="h-12 w-12 rounded-2xl bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"><ArrowUpRight size={24} /></div>
+              </div>
+              <div className="mt-6">
+                <span className="text-4xl font-black text-stone-900 dark:text-stone-50">R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                <p className="text-sm text-stone-400 mt-2 font-medium">Previsão de entrada no mês</p>
+              </div>
+            </div>
+          </div>
+
+          <div onClick={() => setModalAberto("comprometido")} className={`group relative p-6 rounded-3xl bg-white/50 dark:bg-stone-900/50 backdrop-blur-xl border border-stone-200 dark:border-stone-800 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(0,0,0,0.1)] ${glowStatus} overflow-hidden cursor-pointer`}>
+            <div className="absolute inset-0 bg-gradient-to-br from-stone-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Comprometido / Mês</h3>
+                <div className="h-12 w-12 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-600 dark:text-stone-400 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6"><ArrowDownRight size={24} /></div>
+              </div>
+              <div className="mt-6 flex items-end justify-between">
+                <div>
+                  <span className={`text-4xl font-black ${corStatus}`}>{percentualComprometido.toFixed(0)}%</span>
+                  <p className="text-sm text-stone-400 mt-2 font-medium truncate max-w-[120px]">R$ {totalComprometidoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em acordos</p>
+                </div>
+                <Info size={16} className="text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <div className="w-full bg-stone-200 dark:bg-stone-800 rounded-full h-2 mt-3 overflow-hidden"><div className={`h-2 rounded-full transition-all duration-1000 ${corBarra}`} style={{ width: `${Math.min(percentualComprometido, 100)}%` }}></div></div>
+            </div>
+          </div>
+
+          <div onClick={() => setModalAberto("vencimentos")} className="group relative p-6 rounded-3xl bg-gradient-to-br from-[#A67B5B] to-[#8a6347] border border-[#b88c6b] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_40px_rgba(166,123,91,0.4)] overflow-hidden cursor-pointer">
+            <div className="absolute top-0 left-[-100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 group-hover:animate-[shimmer_1.5s_infinite]" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-stone-100">Próximo Vencimento</h3>
+                <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12"><Target size={24} /></div>
+              </div>
+              <div className="mt-6 relative">
+                {proximoVencimento ? (
+                  <>
+                    <span className="text-4xl font-black text-white">R$ {proximoVencimento.valorParcela.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <p className="text-sm text-stone-200 mt-2 font-medium flex justify-between items-center">
+                      <span className="truncate pr-2">{proximoVencimento.titulo}</span>
+                      <span className="bg-white/20 px-2.5 py-1 rounded-md shrink-0">{proximoVencimento.diasFaltantes === 0 ? "É Hoje!" : proximoVencimento.diasFaltantes === 1 ? "Amanhã" : `Em ${proximoVencimento.diasFaltantes} dias`}</span>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-2xl font-black text-white">Tudo Limpo!</span>
+                    <p className="text-sm text-stone-200 mt-2 font-medium">Nenhum contrato ativo pendente.</p>
+                  </>
+                )}
+                <Info size={16} className="text-white/50 absolute top-2 right-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Painel da IA */}
+        <div className="relative p-8 rounded-3xl bg-stone-900 dark:bg-stone-100 border border-stone-800 dark:border-stone-200 overflow-hidden group hover:shadow-[0_0_50px_rgba(255,255,255,0.1)] transition-all duration-700">
+          <div className="absolute top-0 right-0 p-8 opacity-10 transition-transform duration-700 group-hover:scale-150 group-hover:rotate-12"><BrainCircuit size={120} className="text-white dark:text-stone-900" /></div>
+          <div className="relative z-10 md:w-2/3">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="flex h-3 w-3 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A67B5B] opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-[#A67B5B]"></span></span>
+              <h3 className="text-lg font-bold text-stone-100 dark:text-stone-900 uppercase tracking-widest">Análise Pessoal Ativa</h3>
+            </div>
+            <p className="text-stone-300 dark:text-stone-700 text-lg leading-relaxed">
+              "Analisando sua renda de <strong className="text-white dark:text-stone-900">R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>, sua taxa de comprometimento mensal está em <strong className={percentualComprometido > 50 ? 'text-red-400' : 'text-emerald-400'}>{percentualComprometido.toFixed(0)}%</strong>. 
+              {proximoVencimento ? ` A prioridade máxima agora é liquidar '${proximoVencimento.parceiros?.nome}' no dia ${proximoVencimento.dia_vencimento}.` : ' Você não possui vencimentos iminentes no radar.'} 
+              Deseja simular o cenário do próximo mês?"
+            </p>
+          </div>
+        </div>
+
       </div>
 
-      {/* Grid Principal de Cards com Efeitos */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Card 1: Renda e Orçamento (Sincronizado com Perfil Global) */}
-        <div className="group relative p-6 rounded-3xl bg-white/50 dark:bg-stone-900/50 backdrop-blur-xl border border-stone-200 dark:border-stone-800 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(16,185,129,0.15)] overflow-hidden cursor-default">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Renda Base</h3>
-              <div className="h-12 w-12 rounded-2xl bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
-                <ArrowUpRight size={24} />
-              </div>
-            </div>
-            <div className="mt-6">
-              <span className="text-4xl font-black text-stone-900 dark:text-stone-50">
-                R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
-              <p className="text-sm text-stone-400 mt-2 font-medium">Previsão de entrada no mês</p>
-            </div>
-          </div>
-        </div>
+      {/* 🔮 O RAIO-X (Modais Explicativos Glassmorphism) */}
+      {modalAberto && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div onClick={() => setModalAberto(null)} className="absolute inset-0 bg-stone-900/60 backdrop-blur-md animate-in fade-in duration-300" />
+          
+          <div className="relative w-full max-w-lg bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-200 dark:border-stone-800 p-6 animate-in zoom-in-95 duration-300">
+            <button onClick={() => setModalAberto(null)} className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-600 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors"><X size={20}/></button>
+            
+            <h3 className="text-xl font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
+              {modalAberto === "vencimentos" ? <Target className="text-[#A67B5B]"/> : <ArrowDownRight className="text-stone-500" />} 
+              {modalAberto === "vencimentos" ? "Fila de Vencimentos" : "Raio-X do Orçamento"}
+            </h3>
+            
+            <p className="text-sm text-stone-500 dark:text-stone-400 mb-6">
+              {modalAberto === "vencimentos" ? "Entenda a ordem das contas que vão vencer nos próximos dias." : "Veja exatamente quais contratos estão consumindo a sua renda mensal."}
+            </p>
 
-        {/* Card 2: Comprometimento (Sincronizado com Contratos) */}
-        <div className={`group relative p-6 rounded-3xl bg-white/50 dark:bg-stone-900/50 backdrop-blur-xl border border-stone-200 dark:border-stone-800 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(0,0,0,0.1)] ${glowStatus} overflow-hidden cursor-default`}>
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Comprometido / Mês</h3>
-              <div className="h-12 w-12 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-600 dark:text-stone-400 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6">
-                <ArrowDownRight size={24} />
-              </div>
-            </div>
-            <div className="mt-6 flex items-end justify-between">
-              <div>
-                <span className={`text-4xl font-black ${corStatus}`}>
-                  {percentualComprometido.toFixed(0)}%
-                </span>
-                <p className="text-sm text-stone-400 mt-2 font-medium truncate max-w-[120px]">R$ {totalComprometidoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em acordos</p>
-              </div>
-            </div>
-            <div className="w-full bg-stone-200 dark:bg-stone-800 rounded-full h-2 mt-3 overflow-hidden">
-              <div 
-                className={`h-2 rounded-full transition-all duration-1000 ${corBarra}`} 
-                style={{ width: `${Math.min(percentualComprometido, 100)}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Próxima Ação (Matemática Ativa) */}
-        <div className="group relative p-6 rounded-3xl bg-gradient-to-br from-[#A67B5B] to-[#8a6347] border border-[#b88c6b] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_0_40px_rgba(166,123,91,0.4)] overflow-hidden cursor-pointer">
-          <div className="absolute top-0 left-[-100%] w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 group-hover:animate-[shimmer_1.5s_infinite]" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-stone-100">Próximo Vencimento</h3>
-              <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12">
-                <Target size={24} />
-              </div>
-            </div>
-            <div className="mt-6">
-              {proximoVencimento ? (
-                <>
-                  <span className="text-4xl font-black text-white">
-                    R$ {(proximoVencimento.valor_total / (proximoVencimento.quantidade_parcelas || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                  <p className="text-sm text-stone-200 mt-2 font-medium flex justify-between items-center">
-                    <span className="truncate pr-2">{proximoVencimento.titulo}</span>
-                    <span className="bg-white/20 px-2.5 py-1 rounded-md shrink-0">
-                      {proximoVencimento.diasFaltantes === 0 ? "É Hoje!" : proximoVencimento.diasFaltantes === 1 ? "Amanhã" : `Em ${proximoVencimento.diasFaltantes} dias`}
-                    </span>
-                  </p>
-                </>
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+              {listaContratos.length === 0 ? (
+                <p className="text-center text-stone-400 py-4">Nenhum dado para mostrar.</p>
               ) : (
-                <>
-                  <span className="text-2xl font-black text-white">Tudo Limpo!</span>
-                  <p className="text-sm text-stone-200 mt-2 font-medium">Nenhum contrato ativo pendente.</p>
-                </>
+                listaContratos.map((c, index) => (
+                  <div key={c.id} className="flex justify-between items-center p-4 rounded-2xl bg-stone-50 dark:bg-stone-950/50 border border-stone-100 dark:border-stone-800">
+                    <div className="flex gap-4 items-center">
+                      <div className="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 flex items-center justify-center text-stone-600 dark:text-stone-400 font-black text-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-bold text-stone-800 dark:text-stone-100 text-sm truncate max-w-[150px]">{c.titulo}</p>
+                        <p className="text-xs text-stone-500">Todo dia {c.dia_vencimento}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-black text-[#A67B5B]">R$ {c.valorParcela.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                      <p className="text-[10px] uppercase font-bold text-stone-400 mt-0.5">{c.diasFaltantes} dias restantes</p>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
+
+            {modalAberto === "comprometido" && (
+              <div className="mt-4 pt-4 border-t border-stone-100 dark:border-stone-800 flex justify-between items-center">
+                <span className="text-sm font-bold text-stone-500">Soma Total / Mês</span>
+                <span className="text-xl font-black text-stone-900 dark:text-white">R$ {totalComprometidoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Painel da IA - Reflexão Financeira Dinâmica */}
-      <div className="relative p-8 rounded-3xl bg-stone-900 dark:bg-stone-100 border border-stone-800 dark:border-stone-200 overflow-hidden group hover:shadow-[0_0_50px_rgba(255,255,255,0.1)] transition-all duration-700">
-        <div className="absolute top-0 right-0 p-8 opacity-10 transition-transform duration-700 group-hover:scale-150 group-hover:rotate-12">
-          <BrainCircuit size={120} className="text-white dark:text-stone-900" />
-        </div>
-        
-        <div className="relative z-10 md:w-2/3">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A67B5B] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-[#A67B5B]"></span>
-            </span>
-            <h3 className="text-lg font-bold text-stone-100 dark:text-stone-900 uppercase tracking-widest">
-              Análise Pessoal Ativa
-            </h3>
-          </div>
-          <p className="text-stone-300 dark:text-stone-700 text-lg leading-relaxed">
-            "Analisando sua renda declarada de <strong className="text-white dark:text-stone-900">R$ {rendaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>, sua taxa de comprometimento mensal está em <strong className={percentualComprometido > 50 ? 'text-red-400' : 'text-emerald-400'}>{percentualComprometido.toFixed(0)}%</strong>. 
-            {proximoVencimento ? ` Seu foco principal no curto prazo deve ser o compromisso com '${proximoVencimento.parceiros?.nome}', que vence dia ${proximoVencimento.dia_vencimento}.` : ' Você não possui vencimentos iminentes no radar.'} 
-            Deseja que eu simule o cenário do próximo mês?"
-          </p>
-          <button className="mt-6 px-6 py-3 bg-white/10 dark:bg-stone-900/10 hover:bg-white/20 dark:hover:bg-stone-900/20 backdrop-blur-md rounded-xl text-stone-100 dark:text-stone-900 font-bold transition-all hover:scale-105 active:scale-95">
-            Simular Cenários
-          </button>
-        </div>
-      </div>
-
-    </div>
+    </>
   );
 }
