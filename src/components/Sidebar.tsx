@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, FileSignature, Wallet, Users, Settings, X, CreditCard, ShoppingCart, Repeat, Target, Plane } from "lucide-react";
+import { LayoutDashboard, FileSignature, Wallet, Users, Settings, X, CreditCard, ShoppingCart, Repeat, Target, Plane, Home } from "lucide-react";
 import Link from "next/link";
 
 type SidebarProps = { 
@@ -75,6 +75,12 @@ export default function Sidebar({ aberto, fecharMenu }: SidebarProps) {
           <Link href="/dashboard/viagens" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Hub de Transição & Viagens">
             <Plane size={24} className="shrink-0" />
             <span className="md:hidden font-medium">Transição & Viagens</span>
+          </Link>
+
+          {/* 🌟 NOVO: Hub de Convivência */}
+          <Link href="/dashboard/casa" onClick={fecharMenu} className="flex items-center gap-4 p-3 rounded-xl text-stone-500 hover:text-[#A67B5B] hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" title="Hub de Convivência & Operações">
+            <Home size={24} className="shrink-0" />
+            <span className="md:hidden font-medium">Hub de Convivência</span>
           </Link>
           
         </nav>
