@@ -127,7 +127,8 @@ export default function DrawerContrato({ aberto, fechar, aoSalvar }: DrawerProps
         </form>
 
         <div className="p-6 border-t border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-950/50">
-          <button type="submit" form="form-parceiro" disabled={salvando || parceiros.length === 0} className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-[#A67B5B] to-[#8a6347] hover:from-[#966d50] hover:to-[#785438] text-white rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(166,123,91,0.3)] hover:shadow-[0_0_30px_rgba(166,123,91,0.5)] transition-all disabled:opacity-50 hover:-translate-y-1">
+          {/* AQUI ESTAVA O BUG! form="form-parceiro" virou form="form-contrato" */}
+          <button type="submit" form="form-contrato" disabled={salvando || parceiros.length === 0} className="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-[#A67B5B] to-[#8a6347] hover:from-[#966d50] hover:to-[#785438] text-white rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(166,123,91,0.3)] hover:shadow-[0_0_30px_rgba(166,123,91,0.5)] transition-all disabled:opacity-50 hover:-translate-y-1">
             {salvando ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />}
             <span>{salvando ? "Sincronizando..." : "Firmar Acordo"}</span>
           </button>
